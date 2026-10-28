@@ -60,6 +60,18 @@ plans**. `/api/*` goes directly to FastAPI; everything else goes to Next.js.
 Paths retain `/api` inside FastAPI. There is no extra Next.js function hop or CORS
 setup. Dockerfiles are for local development; Vercel uses native framework builds.
 
+The frontend catch-all deliberately uses `/(.*)`: Vercel's Services build compiles
+`/:path*` into a regex that does not match the bare `/` path. Validate the actual
+generated routes after building with Vercel (requires a linked project):
+
+```sh
+vercel build --prod
+bun scripts/check-vercel-routing.mjs
+```
+
+This checks service selection for the homepage, frontend paths/assets, and API
+paths. A plain `next build` or JSON-schema check cannot detect this routing error.
+
 GitHub Actions runs checks independently of Vercel. Deployment is not gated on
 Actions passing; protect `main` with required checks if that is desired.
 
