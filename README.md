@@ -1,4 +1,4 @@
-# Windward — day-ahead wind intelligence
+# dahptd
 
 A historical dashboard for exploring the wind forecasts available before a
 January 2026 purchase decision, and evaluating their accuracy against Elexon
@@ -9,9 +9,10 @@ with uv. No database, external credentials, or request-time data downloads.
 
 Open http://localhost:3000, select a January purchase decision date, and choose a
 decision cutoff. The chart shows the next delivery day's eligible wind forecast.
-Enable **Show actuals** for a retrospective comparison. Daily and monthly metrics
-show typical error (MAE), directional bias and, for the month, RMSE. Expand the
-hourly table to inspect each forecast's publication time and signed error.
+Choose **Compare actuals** or **Signed error** for retrospective inspection.
+Click the chart to pin an hour in the publication inspector, or use its hour
+selector. **Monthly** shows pooled MAE, bias, RMSE and coverage;
+**Data** lists each forecast publication, actual and signed error.
 
 ### Analysis assumptions
 
@@ -40,8 +41,9 @@ hourly table to inspect each forecast's publication time and signed error.
 `frontend/app/dashboard.tsx` fetches `/api/dashboard` through the existing proxy.
 `backend/app/main.py` validates the date/cutoff; `backend/app/analysis.py` loads
 the bundled snapshot, selects forecast vintages, aligns actuals and computes
-metrics. The chart is a lightweight SVG with an equivalent inspectable data
-table, avoiding a charting dependency. Loading, request failure and missing-data
+metrics. The responsive Recharts chart supports keyboard/hover inspection with publication
+details, time-window presets, time-window selection, and a signed-error view
+when actuals are enabled. An equivalent inspectable data table remains available. Loading, request failure and missing-data
 states are explicit. Superseded client requests are cancelled.
 
 The backend caches file loading and a bounded number of computed responses in
