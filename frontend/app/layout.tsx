@@ -2,10 +2,16 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Wind forecast explorer",
-  description: "UK wind generation forecasts and accuracy — January 2026 pilot.",
+  title: "Full-stack starter",
+  description: "Next.js and FastAPI starter application.",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="en"><body>{children}</body></html>;
+  return (
+    <html lang="en" className="scheme-light">
+      <body className="bg-stone-50 font-sans text-emerald-950 antialiased">
+        {children}
+      </body>
+    </html>
+  );
 }

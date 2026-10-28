@@ -1,14 +1,1 @@
-:root { color-scheme: light; font-family: system-ui, sans-serif; color: #183329; background: #f5f7f3; }
-* { box-sizing: border-box; }
-body { margin: 0; }
-main { max-width: 840px; padding: 80px 24px; margin: auto; }
-.eyebrow { font-size: .75rem; font-weight: 700; letter-spacing: .14em; color: #456656; }
-h1 { font-size: clamp(2.2rem, 6vw, 3.8rem); letter-spacing: -.04em; line-height: 1.1; }
-p { line-height: 1.7; }
-.intro { font-size: 1.15rem; }
-section { margin: 36px 0; padding: 28px; background: white; border: 1px solid #d8e1d6; border-radius: 16px; }
-h2 { margin-top: 0; }
-button { padding: 12px 18px; border: 0; border-radius: 8px; background: #215840; color: white; font: inherit; cursor: pointer; }
-button:disabled { opacity: .6; cursor: wait; }
-button:focus-visible { outline: 3px solid #8fbc66; outline-offset: 3px; }
-.footnote, [role="status"] { font-size: .875rem; color: #456656; }
+@import "tailwindcss";

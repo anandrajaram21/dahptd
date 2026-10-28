@@ -25,10 +25,15 @@ export function HealthCheck() {
 
   return (
     <div>
-      <button type="button" disabled={state === "loading"} onClick={check}>
+      <button
+        className="cursor-pointer rounded-lg bg-emerald-800 px-5 py-3 text-white hover:bg-emerald-900 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-600 disabled:cursor-wait disabled:opacity-60"
+        type="button"
+        disabled={state === "loading"}
+        onClick={check}
+      >
         {state === "loading" ? "Checking…" : "Check backend connection"}
       </button>
-      <p role="status" aria-live="polite">
+      <p className="mt-4 text-sm leading-relaxed text-emerald-800" role="status" aria-live="polite">
         {state === "ok" ? "Connected to FastAPI." : state === "error" ? "Cannot reach the API. Check the backend and try again." : "The API is called only when you check — no background polling."}
       </p>
     </div>

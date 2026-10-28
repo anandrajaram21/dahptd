@@ -4,7 +4,7 @@ from fastapi import FastAPI, Response
 from pydantic import BaseModel
 
 app = FastAPI(
-    title="Wind forecast API",
+    title="API",
     version="0.1.0",
     docs_url="/api/docs",
     redoc_url=None,
