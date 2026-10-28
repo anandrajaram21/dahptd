@@ -1,6 +1,55 @@
-# Full-stack starter
+# Windward — day-ahead wind intelligence
 
-Next.js with Bun and Tailwind CSS, plus FastAPI with uv.
+A historical dashboard for exploring the wind forecasts available before a
+January 2026 purchase decision, and evaluating their accuracy against Elexon
+actual generation. Next.js/React with Bun and Tailwind CSS, plus Python/FastAPI
+with uv. No database, external credentials, or request-time data downloads.
+
+## Using the dashboard
+
+Open http://localhost:3000, select a January purchase decision date, and choose a
+decision cutoff. The chart shows the next delivery day's eligible wind forecast.
+Enable **Show actuals** for a retrospective comparison. Daily and monthly metrics
+show typical error (MAE), directional bias and, for the month, RMSE. Expand the
+hourly table to inspect each forecast's publication time and signed error.
+
+### Analysis assumptions
+
+- Decisions on 1–31 January concern delivery on 2 January–1 February 2026.
+- The default **10:00 Europe/London** cutoff is illustrative, not a verified
+  auction deadline; the UI offers 09:00–12:00. January is GMT.
+- For each target hour, take the forecast with the greatest `publishTime` at or
+  before the decision cutoff. Never use a later publication. Selection is per
+  target hour, not necessarily a single complete publication batch.
+- Explicit interval assumption: an hourly WINDFOR value represents its starting
+  hour. Align with the mean of the two FUELHH half-hours at `HH:00` and `HH:30`.
+  This is not interpolation; both actual values must exist.
+- Missing forecasts/actuals stay null. Metrics use only matched pairs and report
+  their denominator; absent values are never treated as zero.
+- Signed error = forecast − actual. MAE is mean absolute error; bias is mean signed
+  error; RMSE is the square root of mean squared error. Monthly metrics pool all
+  matched hourly errors rather than averaging daily RMSEs. All values are MW.
+- The forecast summary is the mean of available hourly forecasts, not purchased
+  energy. National wind data alone cannot establish a utility's procurement
+  volume, prices or savings. Historical errors are not confidence intervals.
+- Actuals, errors and full-month evaluation are hindsight, not information
+  available on the selected decision date. Actuals are a retrieved snapshot.
+
+### Architecture
+
+`frontend/app/dashboard.tsx` fetches `/api/dashboard` through the existing proxy.
+`backend/app/main.py` validates the date/cutoff; `backend/app/analysis.py` loads
+the bundled snapshot, selects forecast vintages, aligns actuals and computes
+metrics. The chart is a lightweight SVG with an equivalent inspectable data
+table, avoiding a charting dependency. Loading, request failure and missing-data
+states are explicit. Superseded client requests are cancelled.
+
+The backend caches file loading and a bounded number of computed responses in
+memory as a disposable performance optimization, not durable application state.
+Tests cover cutoff inclusivity, no lookahead, aggregation, missing values,
+metrics, all January dates, the February boundary and invalid API input.
+
+Example: `/api/dashboard?decision_date=2026-01-15&cutoff=10:00`.
 
 ## Development
 
@@ -16,6 +65,8 @@ docker compose up --build
 
 Source changes reload automatically. Rebuild after dependency or configuration
 changes. Stop with `docker compose down`.
+The data files are copied into the backend image rather than mounted: refreshing
+the dataset requires rebuilding/recreating the backend container.
 
 ### Without Docker
 
@@ -89,8 +140,8 @@ bun run build
 
 ```sh
 cd backend
-uv run --frozen ruff check .
-uv run --frozen ruff format --check .
+uv run --frozen ruff check app tests scripts
+uv run --frozen ruff format --check app tests scripts
 uv run --frozen pytest
 ```
 
@@ -115,5 +166,5 @@ variables are required for the initial scaffold.
 
 ## AI assistance
 
-OpenAI's coding assistant was used to help implement and test the historical
-Elexon data downloader and document its design.
+OpenAI's coding assistant was used to help analyze the brief, implement and test
+the Elexon downloader and dashboard, and document the design and assumptions.
