@@ -45,6 +45,31 @@ def metrics(points):
         "rmse": sqrt(sum(e * e for e in errors) / count) if count else None,
         "matched_hours": count,
         "expected_hours": len(points),
+        "forecast_hours": sum(p.get("forecast") is not None for p in points),
+        "actual_hours": sum(p.get("actual") is not None for p in points),
+        "overestimated_hours": sum(e > 0 for e in errors),
+        "underestimated_hours": sum(e < 0 for e in errors),
+        "equal_hours": sum(e == 0 for e in errors),
+    }
+
+
+def forecast_summary(points):
+    available = [p for p in points if p["forecast"] is not None]
+    lowest = min(available, key=lambda p: p["forecast"]) if available else None
+    highest = max(available, key=lambda p: p["forecast"]) if available else None
+    return {
+        "available_hours": len(available),
+        "expected_hours": len(points),
+        "mean": sum(p["forecast"] for p in available) / len(available)
+        if available
+        else None,
+        "lowest": {key: lowest[key] for key in ("start_time", "forecast")}
+        if lowest
+        else None,
+        "highest": {key: highest[key] for key in ("start_time", "forecast")}
+        if highest
+        else None,
+        "publication_times": sorted({p["publish_time"] for p in available}),
     }
 
 
@@ -80,6 +105,43 @@ def build_day(decision_date: date, cutoff: time, forecasts, actuals):
         "delivery_date": delivery_date.isoformat(),
         "points": points,
         "metrics": metrics(points),
+        "forecast_summary": forecast_summary(points),
+    }
+
+
+@lru_cache(maxsize=32)
+def month_review(cutoff: time):
+    forecasts, actuals = load_data()
+    month_points = []
+    days = []
+    for number in range(1, 32):
+        view = build_day(date(2026, 1, number), cutoff, forecasts, actuals)
+        month_points.extend(view["points"])
+        days.append(
+            {key: view[key] for key in ("decision_date", "delivery_date", "metrics")}
+        )
+    return {
+        "month_metrics": metrics(month_points),
+        "month_days": days,
+        "month_window": {
+            "decision_start": "2026-01-01",
+            "decision_end": "2026-01-31",
+            "delivery_start": "2026-01-02",
+            "delivery_end": "2026-02-01",
+        },
+    }
+
+
+@lru_cache(maxsize=1)
+def snapshot_metadata():
+    with (DATA_DIR / "manifest.json").open() as file:
+        manifest = json.load(file)
+    return {
+        "retrieved_at": manifest["retrieved_at"],
+        "files": {
+            name: {key: details[key] for key in ("dataset", "sha256")}
+            for name, details in manifest["files"].items()
+        },
     }
 
 
@@ -87,13 +149,10 @@ def build_day(decision_date: date, cutoff: time, forecasts, actuals):
 def dashboard(decision_date: date, cutoff: time):
     forecasts, actuals = load_data()
     day = build_day(decision_date, cutoff, forecasts, actuals)
-    month_points = []
-    for number in range(1, 32):
-        view = build_day(date(2026, 1, number), cutoff, forecasts, actuals)
-        month_points.extend(view["points"])
     return {
         **day,
-        "month_metrics": metrics(month_points),
+        **month_review(cutoff),
+        "snapshot": snapshot_metadata(),
         "unit": "MW",
         "timezone": "Europe/London",
     }
