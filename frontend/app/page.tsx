@@ -1,16 +1,16 @@
 import { Suspense } from "react";
-import Dashboard from "./dashboard";
+import ForecastPage from "./forecast-page";
 
 export default function Home() {
   return (
     <Suspense
       fallback={
-        <main className="main-workspace loading-workspace">
-          Loading wind analysis…
+        <main className="grid min-h-svh place-items-center text-sm text-muted-foreground">
+          Loading forecasts…
         </main>
       }
     >
-      <Dashboard />
+      <ForecastPage />
     </Suspense>
   );
 }

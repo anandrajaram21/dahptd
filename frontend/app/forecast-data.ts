@@ -1,0 +1,125 @@
+export type Metrics = {
+  mae: number | null;
+  rmse: number | null;
+  accuracy: number | null;
+  matched_intervals: number;
+  expected_intervals: number;
+  overestimated_intervals: number;
+  underestimated_intervals: number;
+  equal_intervals: number;
+};
+
+export type Point = {
+  start_time: string;
+  forecast_hour: string;
+  forecast: number | null;
+  actual: number | null;
+  error: number | null;
+};
+
+export type ForecastData = {
+  delivery_date: string;
+  decision_date: string;
+  decision_at: string;
+  publish_time: string | null;
+  points: Point[];
+  metrics: Metrics;
+  snapshot: {
+    retrieved_at: string;
+    files: Record<string, { dataset: string; sha256: string }>;
+  };
+};
+
+export type Settings = {
+  date: string;
+  cutoff: string;
+  actuals: boolean;
+};
+
+export const FIRST_DATE = "2026-01-01";
+export const LAST_DATE = "2026-02-01";
+export const DEFAULT_DATE = "2026-01-16";
+export const DEFAULT_CUTOFF = "10:00";
+export const cutoffs = Array.from(
+  { length: 24 },
+  (_, hour) => `${String(hour).padStart(2, "0")}:00`,
+);
+
+const validDate = (value: string) =>
+  /^\d{4}-\d{2}-\d{2}$/.test(value) &&
+  value >= FIRST_DATE &&
+  value <= LAST_DATE;
+
+export function readSettings(params: Pick<URLSearchParams, "get">): Settings {
+  const date = params.get("date") ?? "";
+  const cutoff = params.get("cutoff") ?? "";
+  return {
+    date: validDate(date) ? date : DEFAULT_DATE,
+    cutoff: /^([01]\d|2[0-3]):[0-5]\d$/.test(cutoff) ? cutoff : DEFAULT_CUTOFF,
+    actuals: params.get("actuals") === "1",
+  };
+}
+
+export function settingsQuery({ date, cutoff, actuals }: Settings) {
+  const query = new URLSearchParams({ date, cutoff });
+  if (actuals) query.set("actuals", "1");
+  return query.toString();
+}
+
+export function shiftDate(value: string, days: number) {
+  const date = new Date(`${value}T00:00:00Z`);
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString().slice(0, 10);
+}
+
+// The calendar works with local dates; the API uses ISO date strings.
+export const toLocalDate = (value: string) => {
+  const [year, month, day] = value.split("-").map(Number);
+  return new Date(year, month - 1, day);
+};
+export const fromLocalDate = (date: Date) =>
+  [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, "0"),
+    String(date.getDate()).padStart(2, "0"),
+  ].join("-");
+
+const formatter = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 0 });
+export const number = (value: number | null) =>
+  value === null ? "—" : formatter.format(value);
+export const signed = (value: number) =>
+  `${value > 0 ? "+" : value < 0 ? "−" : ""}${formatter.format(Math.abs(value))}`;
+
+export const dayLabel = (value: string, weekday = true) =>
+  new Date(`${value.slice(0, 10)}T00:00:00Z`).toLocaleDateString("en-GB", {
+    ...(weekday && { weekday: "long" }),
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC",
+  });
+export const shortDayLabel = (value: string) =>
+  new Date(`${value.slice(0, 10)}T00:00:00Z`).toLocaleDateString("en-GB", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    timeZone: "UTC",
+  });
+export const timeLabel = (value: string | number) =>
+  new Date(value).toLocaleTimeString("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "Europe/London",
+  });
+export const publicationLabel = (value: string) =>
+  `${shortDayLabel(value)}, ${timeLabel(value)}`;
+
+const MINUTE = 60_000;
+export const intervalLabel = (start: string, minutes: number) =>
+  `${timeLabel(start)}–${timeLabel(new Date(start).getTime() + minutes * MINUTE)}`;
+
+export function errorDirection(error: number | null) {
+  if (error === null) return null;
+  if (error === 0) return "Forecast matched actual";
+  return error > 0 ? "Forecast too high" : "Forecast too low";
+}
