@@ -35,11 +35,13 @@ import {
 } from "@/components/ui/popover";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { ErrorChart, ForecastChart, chartConfig } from "./forecast-chart";
+import { ReleaseNotice } from "./release-notice";
 import { SiteHeader } from "./site-header";
 import {
   FIRST_DATE,
   LAST_DATE,
   cutoffs,
+  dailyReleaseInfo,
   dayLabel,
   fromLocalDate,
   number,
@@ -258,6 +260,7 @@ export default function ForecastPage() {
                   </ToggleGroupItem>
                 ))}
               </ToggleGroup>
+              {data && <ReleaseNotice {...dailyReleaseInfo(data, cutoff)} />}
               <p className="text-xs text-muted-foreground">
                 Default 10:00, a common planning point before day-ahead auctions
                 close. All times GMT.

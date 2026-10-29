@@ -88,6 +88,26 @@ def test_cutoff_selects_different_publications():
     assert later["publish_time"] == "2026-01-15T09:30:00+00:00"
 
 
+def test_daily_view_lists_releases_for_every_cutoff():
+    result = forecast_view(date(2026, 1, 16), time(17))
+    assert result["schedule"] == [
+        "02:30",
+        "04:30",
+        "07:30",
+        "09:30",
+        "12:25",
+        "15:30",
+        "18:30",
+        "22:30",
+    ]
+    releases = {r["cutoff"]: r["publish_time"] for r in result["cutoff_releases"]}
+    assert len(releases) == 24
+    # Before the first release of the day, the previous evening's one is used.
+    assert releases["00:00"] == "2026-01-14T22:30:00+00:00"
+    assert releases["13:00"] == "2026-01-15T12:25:00+00:00"
+    assert releases["16:00"] == releases["18:00"] == result["publish_time"]
+
+
 def test_forecast_endpoint_and_validation():
     client = TestClient(app)
     response = client.get("/api/forecast?delivery_date=2026-01-16&cutoff=10:00")
@@ -128,6 +148,14 @@ def test_snapshot_month_is_january_only_and_compares_every_cutoff():
     assert len(result["time_of_day"]) == 48
     assert [c["cutoff"] for c in result["cutoffs"]] == [
         f"{hour:02d}:00" for hour in range(24)
+    ]
+    assert result["publications"] == [{"time": "09:30", "days": 31}]
+    by_cutoff = {c["cutoff"]: c["publications"] for c in result["cutoffs"]}
+    # Cutoffs between two releases share the same forecast.
+    assert by_cutoff["16:00"] == by_cutoff["18:00"] == [{"time": "15:30", "days": 31}]
+    assert by_cutoff["13:00"] == [
+        {"time": "11:30", "days": 30},
+        {"time": "12:25", "days": 1},
     ]
     selected = next(c for c in result["cutoffs"] if c["cutoff"] == "10:00")
     assert selected["accuracy"] == result["summary"]["accuracy"]

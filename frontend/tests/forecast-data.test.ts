@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import {
+  dailyReleaseInfo,
   errorDirection,
   fromLocalDate,
   intervalLabel,
@@ -71,5 +72,45 @@ describe("formatting", () => {
     expect(errorDirection(5)).toBe("Forecast too high");
     expect(errorDirection(-5)).toBe("Forecast too low");
     expect(errorDirection(null)).toBeNull();
+  });
+});
+
+describe("daily release notice", () => {
+  const hour = (h: number, publish: string | null) => ({
+    cutoff: `${String(h).padStart(2, "0")}:00`,
+    publish_time: publish,
+  });
+  const releases = [
+    hour(12, "2026-01-15T11:30:00+00:00"),
+    hour(13, "2026-01-15T12:25:00+00:00"),
+    hour(14, "2026-01-15T12:25:00+00:00"),
+    hour(15, "2026-01-15T12:25:00+00:00"),
+    hour(16, "2026-01-15T15:30:00+00:00"),
+  ];
+
+  test("names the forecast and the cutoffs that share it", () => {
+    expect(
+      dailyReleaseInfo(
+        {
+          publish_time: "2026-01-15T12:25:00+00:00",
+          cutoff_releases: releases,
+          schedule: ["11:30", "12:25", "15:30"],
+        },
+        "14:00",
+      ),
+    ).toEqual({
+      release: "12:25",
+      sameFrom: "13:00",
+      sameTo: "15:00",
+      schedule: ["11:30", "12:25", "15:30"],
+    });
+  });
+
+  test("handles minute-level cutoffs and missing forecasts", () => {
+    const info = dailyReleaseInfo(
+      { publish_time: null, cutoff_releases: releases, schedule: [] },
+      "09:45",
+    );
+    expect(info).toMatchObject({ release: null, sameFrom: null, sameTo: null });
   });
 });

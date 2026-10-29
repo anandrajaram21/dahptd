@@ -19,6 +19,7 @@ import { dayLabel, number, signed } from "../forecast-data";
 import {
   dailyHref,
   percent,
+  releaseLabel,
   share,
   type DaySummary,
   type MonthlyData,
@@ -311,6 +312,9 @@ export function CutoffChart({
             if (!active || !row) return null;
             return (
               <TooltipBox title={`Cutoff ${row.cutoff} GMT`}>
+                <p className="text-muted-foreground">
+                  Uses the {releaseLabel(row.publications) ?? "—"} forecast
+                </p>
                 <SummaryRows summary={row} />
                 <Row label="Too high">
                   {share(row.overestimated_intervals, row.matched_intervals)}%

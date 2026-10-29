@@ -21,6 +21,7 @@ import {
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { chartConfig } from "../forecast-chart";
 import { cutoffs, dayLabel, number, signed } from "../forecast-data";
+import { ReleaseNotice } from "../release-notice";
 import { SiteHeader } from "../site-header";
 import { CutoffChart, DailyChart, TimeOfDayChart } from "./monthly-charts";
 import {
@@ -29,6 +30,7 @@ import {
   extremes,
   percent,
   readCutoff,
+  releaseInfo,
   share,
   type DaySummary,
   type MonthlyData,
@@ -148,6 +150,7 @@ export default function MonthlyPage() {
                   </ToggleGroupItem>
                 ))}
               </ToggleGroup>
+              {data && <ReleaseNotice {...releaseInfo(data.cutoffs, cutoff)} />}
             </section>
           </CardContent>
         </Card>

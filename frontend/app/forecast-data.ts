@@ -1,3 +1,5 @@
+import { sameRun, type ReleaseInfo } from "./release-notice";
+
 export type Metrics = {
   mae: number | null;
   rmse: number | null;
@@ -23,6 +25,8 @@ export type ForecastData = {
   decision_at: string;
   publish_time: string | null;
   points: Point[];
+  cutoff_releases: { cutoff: string; publish_time: string | null }[];
+  schedule: string[];
   metrics: Metrics;
   snapshot: {
     retrieved_at: string;
@@ -122,4 +126,16 @@ export function errorDirection(error: number | null) {
   if (error === null) return null;
   if (error === 0) return "Forecast matched actual";
   return error > 0 ? "Forecast too high" : "Forecast too low";
+}
+
+/** The forecast this day's cutoff uses and the cutoffs that share it. */
+export function dailyReleaseInfo(
+  data: Pick<ForecastData, "publish_time" | "cutoff_releases" | "schedule">,
+  cutoff: string,
+): ReleaseInfo {
+  return {
+    release: data.publish_time ? timeLabel(data.publish_time) : null,
+    ...sameRun(data.cutoff_releases, cutoff, (r) => String(r.publish_time)),
+    schedule: data.schedule,
+  };
 }

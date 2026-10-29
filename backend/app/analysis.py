@@ -3,7 +3,7 @@
 import gzip
 import json
 from bisect import bisect_right
-from collections import defaultdict
+from collections import Counter, defaultdict
 from datetime import UTC, date, datetime, time, timedelta
 from functools import lru_cache
 from math import sqrt
@@ -136,8 +136,15 @@ def build_month(cutoff: time, publications, actuals):
     by_time = defaultdict(list)
     for point in points:
         by_time[time_label(point["start_time"])].append(point)
+    # Clock time of the publication each day used; usually one value.
+    releases = Counter(
+        time_label(view["publish_time"]) for view in views if view["publish_time"]
+    )
     return {
         "cutoff": cutoff.strftime("%H:%M"),
+        "publications": [
+            {"time": label, "days": days} for label, days in sorted(releases.items())
+        ],
         "summary": summary(points),
         "days": [
             {
@@ -164,10 +171,13 @@ def cutoff_comparison():
     publications, actuals = load_data()
     return [
         {
-            "cutoff": f"{hour:02d}:00",
-            **build_month(time(hour), publications, actuals)["summary"],
+            "cutoff": month["cutoff"],
+            "publications": month["publications"],
+            **month["summary"],
         }
-        for hour in range(24)
+        for month in (
+            build_month(time(hour), publications, actuals) for hour in range(24)
+        )
     ]
 
 
@@ -195,11 +205,35 @@ def snapshot_metadata():
     }
 
 
+def release_schedule(delivery_date: date, publications):
+    """Which publication each whole-hour cutoff would use for this delivery day,
+    and the clock times of every release on the decision date."""
+    decision_date = delivery_date - timedelta(days=1)
+    releases = []
+    for hour in range(24):
+        published = latest_publication(
+            publications, datetime.combine(decision_date, time(hour), LONDON)
+        )
+        releases.append(
+            {
+                "cutoff": f"{hour:02d}:00",
+                "publish_time": published.isoformat() if published else None,
+            }
+        )
+    schedule = sorted(
+        time_label(p.isoformat())
+        for p in publications
+        if p.astimezone(LONDON).date() == decision_date
+    )
+    return {"cutoff_releases": releases, "schedule": schedule}
+
+
 @lru_cache(maxsize=64)
 def forecast_view(delivery_date: date, cutoff: time):
     publications, actuals = load_data()
     return {
         **build_view(delivery_date, cutoff, publications, actuals),
+        **release_schedule(delivery_date, publications),
         "snapshot": snapshot_metadata(),
         "unit": "MW",
         "timezone": "Europe/London",

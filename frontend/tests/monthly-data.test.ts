@@ -4,8 +4,11 @@ import {
   dailyHref,
   extremes,
   readCutoff,
+  releaseInfo,
+  releaseLabel,
   share,
   type DaySummary,
+  type MonthlyData,
 } from "../app/monthly/monthly-data";
 
 const day = (delivery_date: string, accuracy: number | null) =>
@@ -46,5 +49,60 @@ describe("monthly helpers", () => {
     expect(result.best?.delivery_date).toBe("2026-01-03");
     expect(result.worst?.delivery_date).toBe("2026-01-04");
     expect(share(1256, 1488)).toBe(84);
+  });
+});
+
+describe("release disclaimer", () => {
+  const release = (time: string, days = 31) => [{ time, days }];
+  const rows = [
+    ["11:00", release("09:30")],
+    ["12:00", release("11:30")],
+    [
+      "13:00",
+      [
+        { time: "11:30", days: 30 },
+        { time: "12:25", days: 1 },
+      ],
+    ],
+    [
+      "14:00",
+      [
+        { time: "11:30", days: 30 },
+        { time: "12:25", days: 1 },
+      ],
+    ],
+    [
+      "15:00",
+      [
+        { time: "11:30", days: 30 },
+        { time: "12:25", days: 1 },
+      ],
+    ],
+    ["16:00", release("15:30")],
+    ["17:00", release("15:30")],
+    ["18:00", release("15:30")],
+  ].map(([cutoff, publications]) => ({
+    cutoff,
+    publications,
+  })) as MonthlyData["cutoffs"];
+
+  test("groups neighbouring cutoffs that use the same forecasts", () => {
+    expect(releaseInfo(rows, "17:00")).toMatchObject({
+      release: "15:30",
+      sameFrom: "16:00",
+      sameTo: "18:00",
+    });
+    expect(releaseInfo(rows, "12:00")).toMatchObject({
+      sameFrom: "12:00",
+      sameTo: "12:00",
+    });
+  });
+
+  test("names irregular releases and leaves them out of the schedule", () => {
+    const info = releaseInfo(rows, "14:00");
+    expect(info?.release).toBe("11:30 (12:25 on 1 day)");
+    expect([info?.sameFrom, info?.sameTo]).toEqual(["13:00", "15:00"]);
+    expect(info?.schedule).toEqual(["09:30", "11:30", "15:30"]);
+    expect(releaseLabel([])).toBeNull();
   });
 });
