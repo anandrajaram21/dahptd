@@ -1,39 +1,35 @@
 # Decision context and analytical limits
 
-This is a historical pilot for decisions dated 1–31 January 2026, for delivery on
-2 January–1 February. Inputs remain Elexon WINDFOR and FUELHH `WIND` only. Research
-sources below explain the domain; they are not additional application input data.
+This is a historical pilot for delivery on 1 January–1 February 2026, with the
+cutoff on the day before delivery. Inputs remain Elexon WINDFOR and FUELHH `WIND`
+only. Research sources below explain the domain; they are not additional
+application input data.
 
-## Example planning scenarios
+## Cutoff times
 
-| Scenario | Illustrative planning time | Normal morning orderbook close |
-| --- | --- | --- |
-| Nord Pool GB hourly | 09:45 GMT | 09:50 GMT |
-| EPEX GB hourly | 09:15 GMT | 09:20 GMT |
-
-The five-minute buffers are product examples, **not exchange requirements or an
-approved client workflow**. Confirm the venue and allow for receiving data and
-submitting orders. These normal schedules are supported by dated product rules;
-we have not audited every exceptional reopening during January. Afternoon
-half-hourly products have different deadlines and are not implied by these presets.
-Custom research times need not be pre-auction times.
+The default cutoff is 10:00 GMT. It is an illustrative planning point, **not an
+exchange requirement or an approved client workflow**. For reference, normal
+morning GB hourly orderbook closes are 09:20 GMT (EPEX) and 09:50 (Nord Pool), so
+a real workflow may need an earlier cutoff. Confirm the venue and allow for
+receiving data and submitting orders. The app offers every whole hour so analysts
+can compare vintages without exchange-specific presets.
 
 Primary sources checked 29 October 2026:
 
 - [EPEX February 2025 trading brochure](https://www.epexspot.com/sites/default/files/2025-02/EPEX%20SPOT%20Trading%20Brochure%202025%20February.pdf), p. 5: GB hourly orderbook close 09:20 GMT; results publication is later and is not the bidding deadline.
 - [Nord Pool GB product specifications](https://www.nordpoolgroup.com/4ab576/globalassets/download-center/rules-and-regulations/product-specifications-gb-market.pdf), effective 10 July 2023, sections 1.2 and 3.1: UK times, hourly orderbook close 09:50.
 
-The original 10:00 illustrative cutoff falls after both morning closes. In this
-snapshot, all 744 delivery hours select a 07:30 publication with the EPEX planning
-preset, and a 09:30 publication with the Nord Pool preset. The backend tests assert
-this observed historical distinction; it is not a guarantee of future schedules.
-
 ## Publication-aware selection
 
-For each target, select the greatest source `publishTime` at or before the chosen
-decision time, independently per target. Keep gaps and mixed vintages explicit.
-Never fetch an eventual latest forecast and describe it as a January decision-time
-forecast. Publication timestamps approximate source availability, not desk receipt.
+Select the single publication with the greatest `publishTime` at or before the
+cutoff, and plot its values for the delivery day. Hours that publication lacks
+stay as gaps rather than being filled from older publications. In this snapshot
+WINDFOR is published around 02:30, 04:30, 07:30, 09:30, 11:30, 15:30, 18:30 and
+22:30 UTC, so neighbouring cutoffs often select the same publication. Cutoffs of
+00:00–02:00 select the previous evening's 22:30 publication, which covers only 22
+hours of the delivery day. Never fetch an eventual latest forecast and describe it
+as a decision-time forecast. Publication timestamps approximate source
+availability, not desk receipt.
 
 Elexon's current advertised update schedule conflicts with observed January UTC
 timestamps. Preserve original timestamps rather than adding an assumed one-hour
@@ -54,11 +50,12 @@ should be called all UK wind or a utility's own portfolio. Exact January unit
 membership equivalence remains unverified; do not assume a mismatch explains bias.
 
 The [FUELHH specification](https://bmrs.elexon.co.uk/api-documentation/endpoint/datasets/FUELHH)
-defines average MW over half-hours. Averaging the two complete half-hours gives
-hourly mean actual MW, not interpolation. The [WINDFOR schema](https://bmrs.elexon.co.uk/api-documentation/endpoint/datasets/WINDFOR)
+defines average MW over half-hours. Rather than averaging them, each hourly
+forecast is compared separately with both half-hours it covers, so intra-hour
+variation counts as error. The [WINDFOR schema](https://bmrs.elexon.co.uk/api-documentation/endpoint/datasets/WINDFOR)
 has hourly target timestamps in this snapshot but does not fully settle whether
-these are interval-mean or timestamp-valid values. We retain the explicit
-starting-hour mean assumption; comparison scores are conditional on it. Publisher
+these are interval-mean or timestamp-valid values. We treat each value as
+applying to its whole starting hour; comparison scores are conditional on that. Publisher
 confirmation is still needed, rather than silently introducing interpolation.
 
 Output can reflect curtailment, availability and telemetry as well as weather.
@@ -69,17 +66,40 @@ from the two aggregates.
 
 ## Retrospective scores, not calibrated confidence
 
+### Monthly overview
+
+The monthly page repeats the daily selection rule for each January delivery day
+at one cutoff: the single latest publication at or before that time on the
+previous day. 1 February is excluded so the month is complete. Month metrics pool
+every matched half-hour (1,488 at most) rather than averaging daily figures; RMSE
+is computed after pooling squared errors. Daily forecast and actual values on the
+line chart are averages over that day's matched half-hours. The time-of-day chart
+averages signed error per half-hour slot across the 31 days.
+
+The cutoff comparison reruns the month at each whole-hour cutoff. Cutoffs of
+00:00–02:00 select the previous evening's 22:30 publication, which covers only 22
+delivery hours, so those points are scored on fewer half-hours. In January the
+spread across all cutoffs is about two accuracy points. This is a retrospective
+result, not a recommended trading deadline or evidence that one cutoff will
+outperform in other months.
+
+### Score definitions and limitations
+
 - Error = forecast minus actual. Positive means overestimated wind, not a benefit.
-- MAE is average absolute error in MW; bias is average signed error; RMSE pools
-  squared hourly errors before taking the square root. Bias can cancel.
+- MAE is average absolute error in MW; RMSE pools squared half-hourly errors
+  before taking the square root. Accuracy is 100% − WAPE: total absolute error
+  divided by total actual output for the day. Actual output in this snapshot never
+  falls below 1,695 MW, so percentage measures are well defined; WAPE still avoids
+  weighting low-output half-hours more heavily than per-interval percentages would.
+- Direction is shown by the signed error bars and the too-high/too-low counts,
+  not by an average signed error, which can cancel.
 - Only matched pairs enter scores. Forecast coverage, actual coverage and matched
   coverage are distinct. Missing values remain null, never zero.
 - October-retrieved FUELHH is an operational-outturn snapshot, not a guaranteed
   settlement-final or as-known-in-January archive. Actual publication can be late;
   first-release/correction policy remains unresolved for this pairing.
 - No bias correction, risk score, confidence band or prior-error calibration is
-  claimed. Full-January scores are hindsight, not information available on early
-  January decision dates. Forecast ± MAE is not a prediction interval.
+  claimed. All scores are hindsight, not information available at the cutoff. Forecast ± MAE is not a prediction interval.
 - A later calibration must respect forecast vintages and actual publication/version
   availability at each historical origin, then be evaluated on later untouched
   days. Correlated hourly records are not hundreds of independent weather regimes.

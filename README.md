@@ -1,80 +1,79 @@
 # dahptd
 
-A historical dashboard for exploring the wind forecasts available before a
-January 2026 purchase decision, and evaluating their accuracy against Elexon
-actual generation. Next.js/React with Bun and Tailwind CSS, plus Python/FastAPI
-with uv. No database, external credentials, or request-time data downloads.
+A historical dashboard for exploring the GB wind forecasts available before a
+day-ahead decision, and comparing them with Elexon actual generation.
+Next.js/React with Bun, Tailwind CSS and shadcn/ui, plus Python/FastAPI with uv.
+No database, external credentials, or request-time data downloads.
 
 ## Using the dashboard
 
-Open http://localhost:3000. The dashboard has two tasks:
+Open http://localhost:3000. Page 1 shows the forecast for one delivery day:
 
-- **Wind forecast** shows the next delivery day's eligible forecast, publication
-  time, available hours, average, minimum and maximum. Actuals and realised error
-  metrics are kept out of this view.
-- **Forecast accuracy** compares forecasts with recorded output retrospectively.
-  Choose one day or all January decisions. The daily error breakdown links to each
-  delivery day, including a shortcut to the largest daily miss. Only day views
-  show date controls.
+- **Delivery date** is the day being forecast (1 January–1 February 2026). Pick
+  it from the calendar or step with the arrows.
+- **Cutoff time** is on the day before delivery (default 10:00
+  GMT). The chart uses the single latest forecast published at or before it;
+  the badge shows which publication that is.
+- The chart plots every forecast hour for the delivery day, with hover details.
+- **Show actuals & errors** overlays half-hourly actual output, a signed error
+  bar chart, and accuracy, MAE, RMSE and too-high/too-low counts. Actuals are
+  hindsight: they were not available at the cutoff. The checkbox keeps its state
+  when the date or cutoff changes.
+- Numbered markers link to **Assumptions & methodology** at the bottom.
 
-The decision date and delivery date are labelled separately. **Change scenario**
-offers example pre-close planning times for Nord Pool and EPEX, or a custom
-research time. These are illustrative workflows, not confirmed client settings.
-Hover or use arrow keys in the chart; expand **Hourly values** for the equivalent
-table. **Data & calculation details** contains sources, assumptions and snapshot
-provenance. CSV exports retain the selected context, units and snapshot hashes;
-forecast-only exports exclude actuals and errors. The URL preserves date, time,
-scenario, task and accuracy period, including browser back/forward navigation.
+The URL preserves date, cutoff and the actuals toggle.
+
+### Monthly overview
+
+Open http://localhost:3000/monthly or use the header navigation. It evaluates
+all 31 January 2026 delivery days at one cutoff (the same whole-hour buttons as
+the daily page; the header carries the cutoff between pages):
+
+- **Headline:** how often the forecast was too high and by how much on average,
+  plus month accuracy, MAE and RMSE.
+- **Forecast vs actual, day by day:** daily average forecast and actual. Click a
+  day to open it on the daily page with actuals shown.
+- **Every day at a glance:** a calendar shaded by daily accuracy, with the best
+  and worst days called out. Each day links to the daily page.
+- **When in the day do misses happen?** Average signed error for each half-hour
+  of the day across the month.
+- **Does a later cutoff help?** Month accuracy for every whole-hour cutoff.
+  Click a point to select that cutoff.
+
+API: `/api/monthly?cutoff=10:00`. The response includes the cutoff comparison,
+which is computed once and cached.
 
 ### Analysis assumptions
 
-- Decisions on 1–31 January concern delivery on 2 January–1 February 2026.
-- The default example is **Nord Pool hourly, plan at 09:45 GMT** before the normal
-  09:50 close. The EPEX example plans at **09:15 GMT**, before its 09:20 close.
-  Five-minute buffers are illustrative, not exchange rules; practical receipt and
-  submission timing must be confirmed. A custom cutoff makes no auction claim.
-  January is GMT. See [sources and remaining uncertainties](docs/methodology.md).
-- For each target hour, take the forecast with the greatest `publishTime` at or
-  before the decision cutoff. Never use a later publication. Selection is per
-  target hour, not necessarily a single complete publication batch.
-- Explicit interval assumption: an hourly WINDFOR value is treated as mean power
-  for its starting hour. Align with the mean of the two FUELHH half-hours at
-  `HH:00` and `HH:30`. This is not interpolation; both actual values must exist.
-  WINDFOR's interval-average semantics still need publisher confirmation.
-- Missing forecasts/actuals stay null. Metrics use only matched pairs and report
-  their denominator; absent values are never treated as zero.
-- Signed error = forecast − actual. MAE is mean absolute error; bias is mean signed
-  error; RMSE is the square root of mean squared error. Monthly metrics pool all
-  matched hourly errors rather than averaging daily RMSEs. All values are MW.
-- The forecast summary is the mean of available hourly forecasts, not purchased
-  energy. National wind data alone cannot establish a utility's procurement
-  volume, prices or savings. Historical errors are not confidence intervals.
-- Actuals, errors and full-month evaluation are hindsight, not information
-  available on the selected decision date. Actuals are a retrieved snapshot.
+- The cutoff is on the day before delivery, Europe/London time (GMT in January).
+  10:00 is an illustrative planning point, not an exchange rule.
+- Use the single WINDFOR publication with the greatest `publishTime` at or before
+  the cutoff. Never use a later publication, and never fill hours it lacks from
+  another publication; missing hours stay as gaps.
+- Each hourly forecast is compared separately with both FUELHH half-hours it
+  covers (`HH:00` and `HH:30`), with no averaging. The chart holds the hourly
+  value flat across both half-hours. Variation within an hour counts as error.
+- Signed error = forecast − actual, so positive means the forecast was too high.
+  MAE is mean absolute error; RMSE is the square root of mean squared error;
+  accuracy is 100% − WAPE (sum of absolute errors ÷ sum of actual output). All
+  values are MW and describe the selected delivery day only.
+- Missing forecasts/actuals stay null. Metrics use only matched half-hours and
+  report their denominator; absent values are never treated as zero.
 - Both series describe GB operational-metered wind, not all UK/embedded wind.
-  Exact historical population equivalence remains unverified. Operational output
-  can reflect curtailment, availability and telemetry; differences cannot be
-  attributed exclusively to weather forecasting from these aggregates.
+  Actuals are a retrieved snapshot and can reflect curtailment, availability and
+  telemetry as well as weather. See [methodology](docs/methodology.md).
 
 ### Architecture
 
-`frontend/app/dashboard.tsx` fetches `/api/dashboard` through the existing proxy.
-`backend/app/main.py` validates the date/cutoff; `backend/app/analysis.py` loads
-the bundled snapshot, selects forecast vintages, aligns actuals and computes
-metrics and forecast-only summaries. `frontend/app/dashboard-data.ts` owns typed
-response shapes, validated URL settings, formatting and contextual CSV export.
-`frontend/app/wind-chart.tsx` renders the full-day chart with keyboard/hover
-inspection and publication details. An equivalent data table remains available.
-Loading, request failure and missing-data states are explicit. Superseded client
-requests are cancelled and stalled requests time out after 15 seconds.
+`frontend/app/forecast-page.tsx` renders the page with shadcn/ui components
+(`frontend/components/ui/`) and fetches `/api/forecast` through the local proxy.
+`frontend/app/forecast-chart.tsx` draws the synced forecast and error charts with
+Recharts; `frontend/app/forecast-data.ts` owns response types, URL settings and
+formatting. `backend/app/main.py` validates the delivery date and cutoff;
+`backend/app/analysis.py` loads the bundled snapshot, selects the publication,
+pairs half-hourly actuals and computes metrics.
 
-The backend caches file loading, month evaluations independently of the selected
-day, and a bounded number of responses in disposable memory. Tests cover cutoff
-inclusivity, no lookahead, aggregation, missing values, distinct coverage counts,
-mixed publication vintages, market examples, pooled monthly results, the February
-boundary, invalid input, URL settings and exports without hindsight leakage.
-
-Example: `/api/dashboard?decision_date=2026-01-15&cutoff=09:45`.
+Example: `/api/forecast?delivery_date=2026-01-16&cutoff=10:00`.
 
 ## Development
 
