@@ -4,7 +4,7 @@ from typing import Annotated, Literal
 from fastapi import FastAPI, HTTPException, Query, Response
 from pydantic import BaseModel
 
-from app.analysis import dashboard
+from app.analysis import FIRST_DELIVERY, LAST_DELIVERY, forecast_view
 
 app = FastAPI(
     title="API",
@@ -25,11 +25,13 @@ async def health(response: Response) -> HealthResponse:
     return HealthResponse()
 
 
-@app.get("/api/dashboard")
-def get_dashboard(
-    decision_date: date = date(2026, 1, 15),
-    cutoff: Annotated[str, Query(pattern=r"^([01]\d|2[0-3]):[0-5]\d$")] = "09:45",
+@app.get("/api/forecast")
+def get_forecast(
+    delivery_date: date = date(2026, 1, 16),
+    cutoff: Annotated[str, Query(pattern=r"^([01]\d|2[0-3]):[0-5]\d$")] = "10:00",
 ):
-    if not date(2026, 1, 1) <= decision_date <= date(2026, 1, 31):
-        raise HTTPException(422, "Decision date must be in January 2026")
-    return dashboard(decision_date, time.fromisoformat(cutoff))
+    if not FIRST_DELIVERY <= delivery_date <= LAST_DELIVERY:
+        raise HTTPException(
+            422, "Delivery date must be between 1 January and 1 February 2026"
+        )
+    return forecast_view(delivery_date, time.fromisoformat(cutoff))
