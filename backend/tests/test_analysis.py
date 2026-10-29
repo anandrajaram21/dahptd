@@ -3,9 +3,11 @@ from datetime import date, time
 from fastapi.testclient import TestClient
 
 from app.analysis import (
+    build_month,
     build_view,
     forecast_view,
     metrics,
+    month_view,
     timestamp,
 )
 from app.main import app
@@ -94,3 +96,48 @@ def test_forecast_endpoint_and_validation():
     assert client.get("/api/forecast?delivery_date=2025-12-31").status_code == 422
     assert client.get("/api/forecast?delivery_date=2026-02-02").status_code == 422
     assert client.get("/api/forecast?cutoff=25:00").status_code == 422
+
+
+def test_month_summarises_days_and_time_of_day_at_one_cutoff():
+    hour = timestamp("2026-01-01T00:00:00Z")
+    published = timestamp("2025-12-31T09:30:00Z")
+    later = timestamp("2025-12-31T10:30:00Z")
+    actuals = {hour: 80, timestamp("2026-01-01T00:30:00Z"): 130}
+    result = build_month(
+        time(10), {published: {hour: 100}, later: {hour: 999}}, actuals
+    )
+    assert result["cutoff"] == "10:00"
+    assert len(result["days"]) == 31
+    first = result["days"][0]
+    assert first["publish_time"] == published.isoformat()
+    assert (first["mean_error"], first["mean_forecast"]) == (-5, 100)
+    assert first["matched_intervals"] == 2
+    # Later days fall back to the latest earlier publication, never a later one.
+    assert result["days"][1]["publish_time"] == later.isoformat()
+    assert result["days"][1]["matched_intervals"] == 0
+    assert [t["time"] for t in result["time_of_day"][:2]] == ["00:00", "00:30"]
+    assert result["time_of_day"][1]["mean_error"] == -30
+    assert result["summary"]["matched_intervals"] == 2
+
+
+def test_snapshot_month_is_january_only_and_compares_every_cutoff():
+    result = month_view(time(10))
+    assert result["days"][0]["delivery_date"] == "2026-01-01"
+    assert result["days"][-1]["delivery_date"] == "2026-01-31"
+    assert result["summary"]["matched_intervals"] == 31 * 48
+    assert len(result["time_of_day"]) == 48
+    assert [c["cutoff"] for c in result["cutoffs"]] == [
+        f"{hour:02d}:00" for hour in range(24)
+    ]
+    selected = next(c for c in result["cutoffs"] if c["cutoff"] == "10:00")
+    assert selected["accuracy"] == result["summary"]["accuracy"]
+    # The previous evening's last publication lacks two hours of delivery.
+    assert result["cutoffs"][0]["matched_intervals"] < 31 * 48
+
+
+def test_monthly_endpoint_validation():
+    client = TestClient(app)
+    response = client.get("/api/monthly?cutoff=12:00")
+    assert response.status_code == 200
+    assert response.json()["cutoff"] == "12:00"
+    assert client.get("/api/monthly?cutoff=24:00").status_code == 422

@@ -106,6 +106,82 @@ def publication_points(delivery_date, forecast, actuals):
     return points
 
 
+MONTH_START = date(2026, 1, 1)
+MONTH_END = date(2026, 1, 31)
+
+
+def month_days():
+    day = MONTH_START
+    while day <= MONTH_END:
+        yield day
+        day += timedelta(days=1)
+
+
+def summary(points):
+    """Metrics plus signed and level averages over matched half-hours."""
+    pairs = [p for p in points if p["error"] is not None]
+    count = len(pairs)
+    return {
+        **metrics(points),
+        "mean_error": sum(p["error"] for p in pairs) / count if count else None,
+        "mean_forecast": sum(p["forecast"] for p in pairs) / count if count else None,
+        "mean_actual": sum(p["actual"] for p in pairs) / count if count else None,
+    }
+
+
+def build_month(cutoff: time, publications, actuals):
+    """January delivery days at one cutoff: month totals, days and time of day."""
+    views = [build_view(day, cutoff, publications, actuals) for day in month_days()]
+    points = [point for view in views for point in view["points"]]
+    by_time = defaultdict(list)
+    for point in points:
+        by_time[time_label(point["start_time"])].append(point)
+    return {
+        "cutoff": cutoff.strftime("%H:%M"),
+        "summary": summary(points),
+        "days": [
+            {
+                "delivery_date": view["delivery_date"],
+                "publish_time": view["publish_time"],
+                **summary(view["points"]),
+            }
+            for view in views
+        ],
+        "time_of_day": [
+            {"time": label, **summary(group)}
+            for label, group in sorted(by_time.items())
+        ],
+    }
+
+
+def time_label(value: str) -> str:
+    return timestamp(value).astimezone(LONDON).strftime("%H:%M")
+
+
+@lru_cache(maxsize=1)
+def cutoff_comparison():
+    """Month-level metrics for every whole-hour cutoff, for comparison."""
+    publications, actuals = load_data()
+    return [
+        {
+            "cutoff": f"{hour:02d}:00",
+            **build_month(time(hour), publications, actuals)["summary"],
+        }
+        for hour in range(24)
+    ]
+
+
+@lru_cache(maxsize=32)
+def month_view(cutoff: time):
+    return {
+        **build_month(cutoff, *load_data()),
+        "cutoffs": cutoff_comparison(),
+        "snapshot": snapshot_metadata(),
+        "unit": "MW",
+        "timezone": "Europe/London",
+    }
+
+
 @lru_cache(maxsize=1)
 def snapshot_metadata():
     with (DATA_DIR / "manifest.json").open() as file:

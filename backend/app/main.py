@@ -4,7 +4,7 @@ from typing import Annotated, Literal
 from fastapi import FastAPI, HTTPException, Query, Response
 from pydantic import BaseModel
 
-from app.analysis import FIRST_DELIVERY, LAST_DELIVERY, forecast_view
+from app.analysis import FIRST_DELIVERY, LAST_DELIVERY, forecast_view, month_view
 
 app = FastAPI(
     title="API",
@@ -35,3 +35,10 @@ def get_forecast(
             422, "Delivery date must be between 1 January and 1 February 2026"
         )
     return forecast_view(delivery_date, time.fromisoformat(cutoff))
+
+
+@app.get("/api/monthly")
+def get_monthly(
+    cutoff: Annotated[str, Query(pattern=r"^([01]\d|2[0-3]):[0-5]\d$")] = "10:00",
+):
+    return month_view(time.fromisoformat(cutoff))
