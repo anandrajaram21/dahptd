@@ -7,24 +7,40 @@ with uv. No database, external credentials, or request-time data downloads.
 
 ## Using the dashboard
 
-Open http://localhost:3000, select a January purchase decision date, and choose a
-decision cutoff. The chart shows the next delivery day's eligible wind forecast.
-Choose **Compare actuals** or **Signed error** for retrospective inspection.
-Click the chart to pin an hour in the publication inspector, or use its hour
-selector. **Monthly** shows pooled MAE, bias, RMSE and coverage;
-**Data** lists each forecast publication, actual and signed error.
+Open http://localhost:3000. The dashboard has two tasks:
+
+- **Wind forecast** shows the next delivery day's eligible forecast, publication
+  time, available hours, average, minimum and maximum. Actuals and realised error
+  metrics are kept out of this view.
+- **Forecast accuracy** compares forecasts with recorded output retrospectively.
+  Choose one day or all January decisions. The daily error breakdown links to each
+  delivery day, including a shortcut to the largest daily miss. Only day views
+  show date controls.
+
+The decision date and delivery date are labelled separately. **Change scenario**
+offers example pre-close planning times for Nord Pool and EPEX, or a custom
+research time. These are illustrative workflows, not confirmed client settings.
+Hover or use arrow keys in the chart; expand **Hourly values** for the equivalent
+table. **Data & calculation details** contains sources, assumptions and snapshot
+provenance. CSV exports retain the selected context, units and snapshot hashes;
+forecast-only exports exclude actuals and errors. The URL preserves date, time,
+scenario, task and accuracy period, including browser back/forward navigation.
 
 ### Analysis assumptions
 
 - Decisions on 1–31 January concern delivery on 2 January–1 February 2026.
-- The default **10:00 Europe/London** cutoff is illustrative, not a verified
-  auction deadline; the UI offers 09:00–12:00. January is GMT.
+- The default example is **Nord Pool hourly, plan at 09:45 GMT** before the normal
+  09:50 close. The EPEX example plans at **09:15 GMT**, before its 09:20 close.
+  Five-minute buffers are illustrative, not exchange rules; practical receipt and
+  submission timing must be confirmed. A custom cutoff makes no auction claim.
+  January is GMT. See [sources and remaining uncertainties](docs/methodology.md).
 - For each target hour, take the forecast with the greatest `publishTime` at or
   before the decision cutoff. Never use a later publication. Selection is per
   target hour, not necessarily a single complete publication batch.
-- Explicit interval assumption: an hourly WINDFOR value represents its starting
-  hour. Align with the mean of the two FUELHH half-hours at `HH:00` and `HH:30`.
-  This is not interpolation; both actual values must exist.
+- Explicit interval assumption: an hourly WINDFOR value is treated as mean power
+  for its starting hour. Align with the mean of the two FUELHH half-hours at
+  `HH:00` and `HH:30`. This is not interpolation; both actual values must exist.
+  WINDFOR's interval-average semantics still need publisher confirmation.
 - Missing forecasts/actuals stay null. Metrics use only matched pairs and report
   their denominator; absent values are never treated as zero.
 - Signed error = forecast − actual. MAE is mean absolute error; bias is mean signed
@@ -35,23 +51,30 @@ selector. **Monthly** shows pooled MAE, bias, RMSE and coverage;
   volume, prices or savings. Historical errors are not confidence intervals.
 - Actuals, errors and full-month evaluation are hindsight, not information
   available on the selected decision date. Actuals are a retrieved snapshot.
+- Both series describe GB operational-metered wind, not all UK/embedded wind.
+  Exact historical population equivalence remains unverified. Operational output
+  can reflect curtailment, availability and telemetry; differences cannot be
+  attributed exclusively to weather forecasting from these aggregates.
 
 ### Architecture
 
 `frontend/app/dashboard.tsx` fetches `/api/dashboard` through the existing proxy.
 `backend/app/main.py` validates the date/cutoff; `backend/app/analysis.py` loads
 the bundled snapshot, selects forecast vintages, aligns actuals and computes
-metrics. The responsive Recharts chart supports keyboard/hover inspection with publication
-details, time-window presets, time-window selection, and a signed-error view
-when actuals are enabled. An equivalent inspectable data table remains available. Loading, request failure and missing-data
-states are explicit. Superseded client requests are cancelled.
+metrics and forecast-only summaries. `frontend/app/dashboard-data.ts` owns typed
+response shapes, validated URL settings, formatting and contextual CSV export.
+`frontend/app/wind-chart.tsx` renders the full-day chart with keyboard/hover
+inspection and publication details. An equivalent data table remains available.
+Loading, request failure and missing-data states are explicit. Superseded client
+requests are cancelled and stalled requests time out after 15 seconds.
 
-The backend caches file loading and a bounded number of computed responses in
-memory as a disposable performance optimization, not durable application state.
-Tests cover cutoff inclusivity, no lookahead, aggregation, missing values,
-metrics, all January dates, the February boundary and invalid API input.
+The backend caches file loading, month evaluations independently of the selected
+day, and a bounded number of responses in disposable memory. Tests cover cutoff
+inclusivity, no lookahead, aggregation, missing values, distinct coverage counts,
+mixed publication vintages, market examples, pooled monthly results, the February
+boundary, invalid input, URL settings and exports without hindsight leakage.
 
-Example: `/api/dashboard?decision_date=2026-01-15&cutoff=10:00`.
+Example: `/api/dashboard?decision_date=2026-01-15&cutoff=09:45`.
 
 ## Development
 
@@ -136,6 +159,7 @@ with gzip.open(data_dir / "forecasts.json.gz", "rt", encoding="utf-8") as file:
 ```sh
 cd frontend
 bun run lint
+bun run test
 bun run typecheck
 bun run build
 ```
@@ -154,6 +178,7 @@ frontend/              Next.js app, Bun dependencies, Dockerfile
 backend/               FastAPI app, tests, uv dependencies, Dockerfile
 backend/data/elexon/   Bundled historical actuals, forecasts and provenance
 backend/scripts/       Repeatable historical data downloader
+docs/methodology.md    Domain sources, decision scenarios and open assumptions
 .github/workflows/     CI checks
 compose.yaml           Local development services
 vercel.json            Deployment services and routing
