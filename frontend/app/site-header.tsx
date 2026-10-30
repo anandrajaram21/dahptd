@@ -1,21 +1,36 @@
 import Link from "next/link";
+import { ThemeToggle } from "./theme-toggle";
 
 export function SiteHeader({
   active,
   cutoff,
+  readout,
 }: {
   active: "daily" | "monthly";
   // Carried between pages so both show the same cutoff.
   cutoff?: string;
+  // What the sheet currently shows, e.g. "Fri 16 Jan 2026 · cutoff 10:00".
+  readout?: string;
 }) {
   const query = cutoff ? `?${new URLSearchParams({ cutoff })}` : "";
   return (
-    <header className="border-b">
-      <div className="mx-auto flex min-h-14 max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
-        <Link href="/" className="font-medium tracking-tight">
+    <header className="bg-band text-band-foreground">
+      <div className="mx-auto flex min-h-16 max-w-[90rem] flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3 sm:px-8">
+        <Link
+          href="/"
+          className="text-2xl font-extrabold tracking-[-0.03em] focus-visible:outline-band-foreground"
+        >
           dahptd
         </Link>
-        <nav aria-label="Main navigation" className="flex gap-1 text-sm">
+        {readout && (
+          <p className="hidden border-l-[1.5px] border-band-foreground/40 pl-5 text-sm leading-tight font-semibold md:block">
+            {readout}
+          </p>
+        )}
+        <nav
+          aria-label="Main navigation"
+          className="ml-auto flex items-center gap-1 text-sm font-semibold"
+        >
           {[
             { id: "daily", href: `/${query}`, label: "Daily forecast" },
             {
@@ -28,12 +43,13 @@ export function SiteHeader({
               key={item.id}
               href={item.href}
               aria-current={active === item.id ? "page" : undefined}
-              className={`rounded-md px-3 py-1.5 ${active === item.id ? "bg-secondary font-medium" : "text-muted-foreground hover:text-foreground"}`}
+              className={`rounded-full px-4 py-2 transition-colors focus-visible:outline-band-foreground ${active === item.id ? "bg-white text-[#c8177b]" : "hover:bg-band-foreground/10"}`}
             >
               {item.label}
             </Link>
           ))}
         </nav>
+        <ThemeToggle />
       </div>
     </header>
   );
