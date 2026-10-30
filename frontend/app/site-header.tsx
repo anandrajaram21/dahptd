@@ -43,7 +43,7 @@ export function SiteHeader({
               key={item.id}
               href={item.href}
               aria-current={active === item.id ? "page" : undefined}
-              className={`rounded-full px-4 py-2 transition-colors focus-visible:outline-band-foreground ${active === item.id ? "bg-white text-[#c8177b] dark:text-band" : "hover:bg-band-foreground/10"}`}
+              className={`rounded-full px-4 py-2 transition-colors focus-visible:outline-band-foreground ${active === item.id ? "bg-white text-ring dark:text-band" : "hover:bg-band-foreground/10"}`}
             >
               {item.label}
             </Link>

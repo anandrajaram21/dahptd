@@ -18,7 +18,7 @@
   }
   * { box-sizing: border-box; margin: 0; }
   html, body { height: 100%; background: #10171d; color: var(--ink); font-family: var(--sans); overflow: hidden; font-variant-numeric: tabular-nums; }
-  ::selection { background: var(--magenta); color: #fff; }
+  ::selection { background: var(--band); color: var(--ink); }
 
   #stage { position: absolute; left: 50%; top: 50%; width: 1600px; height: 900px; transform-origin: center; }
   .slide { position: absolute; inset: 0; background: var(--paper); display: flex; flex-direction: column; overflow: hidden;
@@ -197,19 +197,19 @@
 <section class="slide sheet" data-part="Part 1 · Pilot walkthrough">
   <div class="top"><h2 class="rise"><span class="qn">1</span>Which forecast did your desk actually have?</h2><span class="part">2 · Daily view</span></div>
   <div class="work rise d1">
-    <div class="shot" data-cams='{"0":[720,450,1],"1":[230,400,1.75],"4":[720,450,1]}'>
+    <div class="shot" data-cams='{"0":[720,450,1],"1":[230,450,1.4],"4":[720,450,1]}'>
       <div class="cam" style="height:900px">
         <img src="shots/daily-forecast.webp" style="top:0" alt="Daily page with forecast only">
         <svg class="ov" width="1440" height="900" viewBox="0 0 1440 900">
-          <rect class="ring" data-step="1" pathLength="1" x="18" y="282" width="299" height="174" rx="8"/>
-          <rect class="ring blue" data-step="2" pathLength="1" x="113" y="326" width="56" height="46" rx="6"/>
-          <rect class="ring blue" data-step="2" pathLength="1" x="161" y="286" width="56" height="44" rx="6"/>
-          <rect class="ring" data-step="3" pathLength="1" x="18" y="454" width="299" height="180" rx="8"/>
+          <rect class="ring" data-step="1" pathLength="1" x="18" y="282" width="299" height="253" rx="8"/>
+          <rect class="ring blue" data-step="2" pathLength="1" x="20" y="367" width="78" height="44" rx="6"/>
+          <rect class="ring blue" data-step="2" pathLength="1" x="164" y="367" width="78" height="44" rx="6"/>
+          <rect class="ring" data-step="3" pathLength="1" x="18" y="536" width="299" height="196" rx="8"/>
           <rect class="ring" data-step="4" pathLength="1" x="122" y="17" width="350" height="30" rx="8"/>
           <path class="arrow" data-step="4" pathLength="1" d="M1000 278 C 1040 330, 1090 370, 1140 392"/>
           <g class="pin" data-step="1"><circle cx="340" cy="300" r="24"/><text x="340" y="301">1</text></g>
-          <g class="pin" data-step="2"><circle cx="200" cy="395" r="24"/><text x="200" y="396">2</text></g>
-          <g class="pin" data-step="3"><circle cx="340" cy="475" r="24"/><text x="340" y="476">3</text></g>
+          <g class="pin" data-step="2"><circle cx="340" cy="390" r="24"/><text x="340" y="391">2</text></g>
+          <g class="pin" data-step="3"><circle cx="340" cy="557" r="24"/><text x="340" y="558">3</text></g>
           <g class="pin" data-step="4"><circle cx="990" cy="252" r="24"/><text x="990" y="253">4</text></g>
         </svg>
       </div>
@@ -220,7 +220,7 @@
       <ol class="steps">
         <li data-step="1"><span>1</span><div><b>Pick your cutoff</b>Any hour on the day before delivery. The grid is your decision clock.</div></li>
         <li data-step="2"><span>2</span><div><b>See the release rhythm</b>Blue dots mark the first hour after each new Elexon release.</div></li>
-        <li data-step="3"><span>3</span><div><b>The exact run, named</b>"Uses the 09:30 release." Never a later one, never a blend.</div></li>
+        <li data-step="3"><span>3</span><div><b>The exact run, named</b>"Uses the 9:30 am release." Never a later one, never a blend.</div></li>
         <li data-step="4"><span>4</span><div><b>Read the forecast</b>Magenta is the forecast your desk had, hour by hour.</div></li>
       </ol>
     </div>
@@ -551,7 +551,7 @@
       <div class="lane"><b>Frontend</b><span class="ck"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="#3f9a49"/><path d="M7 12.5l3.2 3.2L17 9" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>eslint</span><span class="ck"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="#3f9a49"/><path d="M7 12.5l3.2 3.2L17 9" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>bun test · 15</span><span class="ck"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="#3f9a49"/><path d="M7 12.5l3.2 3.2L17 9" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>typecheck</span><span class="ck"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="#3f9a49"/><path d="M7 12.5l3.2 3.2L17 9" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>next build</span></div>
       <p style="margin-top:8px">Pinned <b>Bun 1.4.3</b> and <b>uv 0.13.4</b> with frozen lockfiles; Docker for both services; checksummed data. Data loads once per instance and views are memoised, so a 10 s function limit is plenty.</p>
     </div>
-    <figure style="display:grid; gap:10px"><div class="shot" style="aspect-ratio:16/10"><img src="shots/daily-dark.webp" alt="Daily page in dark mode" style="width:100%; height:100%; object-fit:cover; display:block"></div><figcaption style="font-size:18px; color:var(--muted)">Light and dark from one token set; the switch remembers your choice.</figcaption></figure>
+    <figure style="display:grid; gap:10px"><div class="shot" style="aspect-ratio:16/10"><img src="shots/daily-dark.webp" alt="Updated daily page in dark mode, with magenta header and selected cutoff" style="width:100%; height:100%; object-fit:cover; display:block"></div><figcaption style="font-size:18px; color:var(--muted)">Orange controls in light mode, magenta in dark; the switch remembers your choice.</figcaption></figure>
   </div>
   <div class="reveal" data-step="1" style="margin-top:34px; border-top:2px solid var(--ink); padding-top:22px">
     <p><b>Known trade-offs → next steps:</b> snapshot isn't live (scheduled ingestion + Blob storage) · WINDFOR interval semantics need publisher confirmation · per-instance cache only · AI assistants helped build this, with every rule covered by tests.</p>

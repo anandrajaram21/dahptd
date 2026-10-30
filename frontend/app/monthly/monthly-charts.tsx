@@ -336,7 +336,7 @@ export function CutoffChart({
         />
         <ReferenceLine
           x={selected}
-          stroke="var(--color-forecast)"
+          stroke="var(--ring)"
           strokeDasharray="3 4"
         />
         <ChartTooltip
@@ -389,13 +389,13 @@ export function CutoffChart({
                 cx={props.cx}
                 cy={props.cy}
                 r={active ? 6 : 3}
-                fill={active ? "var(--color-forecast)" : "var(--card)"}
-                stroke="var(--color-forecast)"
+                fill={active ? "var(--primary)" : "var(--card)"}
+                stroke={active ? "var(--ring)" : "var(--color-forecast)"}
                 strokeWidth={2}
               />
             );
           }}
-          activeDot={{ r: 6 }}
+          activeDot={{ r: 6, fill: "var(--primary)", stroke: "var(--ring)" }}
         />
       </LineChart>
     </ChartContainer>

@@ -60,7 +60,7 @@
 }
 
 :root {
-  /* Ordnance Survey sheet: white paper, ink, survey blue, OS magenta. */
+  /* Explorer sheet: white paper, survey blue, orange controls; magenta forecast. */
   --radius: 0.375rem;
   --background: #ffffff;
   --foreground: #1d2a33;
@@ -68,18 +68,18 @@
   --card-foreground: #1d2a33;
   --popover: #ffffff;
   --popover-foreground: #1d2a33;
-  --primary: #c8177b;
-  --primary-foreground: #ffffff;
+  --primary: #f37021;
+  --primary-foreground: #1d2a33;
   --secondary: #eaf4fa;
   --secondary-foreground: #1d2a33;
   --muted: #eaf4fa;
   --muted-foreground: #4a5d6b;
-  --accent: #fbe6f1;
+  --accent: #fff0e5;
   --accent-foreground: #1d2a33;
   --destructive: #c62828;
   --border: #c5dcea;
   --input: #93bcd4;
-  --ring: #c8177b;
+  --ring: #a8490a;
 
   /* Sheet furniture. */
   --band: #f37021;

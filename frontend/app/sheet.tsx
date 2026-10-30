@@ -144,7 +144,7 @@ export function CutoffGrid({
             )}
           >
             {clock}
-            <span className="text-[0.7rem] font-medium opacity-75">{half}</span>
+            <span className="text-[0.7rem] font-medium">{half}</span>
             {release && (
               <span
                 aria-hidden="true"
