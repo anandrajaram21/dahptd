@@ -3,25 +3,24 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { ChevronDownIcon, TriangleAlertIcon } from "lucide-react";
+import { TriangleAlertIcon } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { chartConfig } from "../forecast-chart";
 import { cutoffs, dayLabel, number, signed } from "../forecast-data";
 import { ReleaseNotice } from "../release-notice";
+import {
+  CutoffGrid,
+  DepthKey,
+  Figure,
+  LegendKey,
+  NoteRef,
+  NotesPanel,
+  PanelGroup,
+  Sheet,
+  StatStrip,
+  noteOpener,
+} from "../sheet";
 import { SiteHeader } from "../site-header";
 import { CutoffChart, DailyChart, TimeOfDayChart } from "./monthly-charts";
 import {
@@ -37,8 +36,15 @@ import {
   type Summary,
 } from "./monthly-data";
 
-// Calendar shading: one hue, stronger for days with larger misses.
-const HEAT = "144, 133, 233";
+// Calendar shading: the miss-depth ramp, in fixed accuracy steps.
+const ACCURACY_STEPS = [
+  { min: 90, label: "90%+" },
+  { min: 80, label: "80–90%" },
+  { min: 60, label: "60–80%" },
+  { min: -Infinity, label: "under 60%" },
+];
+const accuracyStep = (accuracy: number) =>
+  ACCURACY_STEPS.findIndex((step) => accuracy >= step.min) + 1;
 
 export default function MonthlyPage() {
   const cutoff = readCutoff(useSearchParams());
@@ -89,72 +95,70 @@ export default function MonthlyPage() {
     );
   }
 
-  function openNote(id: number) {
-    setNotesOpen(true);
-    requestAnimationFrame(() =>
-      document
-        .getElementById(`note-${id}`)
-        ?.scrollIntoView({ behavior: "smooth", block: "center" }),
-    );
-  }
+  const openNote = noteOpener(setNotesOpen);
+  const release = data ? releaseInfo(data.cutoffs, cutoff) : null;
+
+  const panel = (
+    <>
+      <PanelGroup
+        id="month-label"
+        label={
+          <>
+            Delivery month
+            <NoteRef id={1} onOpen={openNote} />
+          </>
+        }
+      >
+        <p className="text-lg font-semibold">January 2026</p>
+        <p className="text-[0.8rem] text-muted-foreground">
+          31 delivery days · actuals shown throughout
+        </p>
+      </PanelGroup>
+      <PanelGroup
+        id="cutoff-label"
+        label={
+          <>
+            Cutoff · day before each delivery
+            <NoteRef id={2} onOpen={openNote} />
+          </>
+        }
+        hint="Every day uses the latest forecast published by this time on the day before. All times GMT."
+      >
+        <CutoffGrid
+          cutoffs={cutoffs}
+          value={cutoff}
+          releases={release?.schedule ?? []}
+          onChange={selectCutoff}
+        />
+        {release && <ReleaseNotice {...release} />}
+      </PanelGroup>
+    </>
+  );
+
+  const legend = (
+    <>
+      <LegendKey
+        items={[
+          { color: chartConfig.forecast.color, label: "Forecast at cutoff" },
+          {
+            color: chartConfig.actual.color,
+            kind: "dashed",
+            label: "Actual generation (hindsight)",
+          },
+        ]}
+      />
+      <DepthKey />
+    </>
+  );
 
   return (
     <div className="min-h-svh">
-      <SiteHeader active="monthly" cutoff={cutoff} />
-
-      <main className="mx-auto grid max-w-6xl gap-6 px-4 py-6 sm:px-6 sm:py-8">
-        <Card>
-          <CardContent className="grid gap-6 md:grid-cols-[minmax(0,18rem)_minmax(0,1fr)] md:gap-8">
-            <section className="grid content-start gap-1">
-              <h1 className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-                Delivery month
-                <NoteRef id={1} onOpen={openNote} />
-              </h1>
-              <p className="text-lg font-medium">January 2026</p>
-              <p className="text-xs text-muted-foreground">
-                31 delivery days · actuals shown throughout
-              </p>
-            </section>
-            <section aria-labelledby="cutoff-label" className="grid gap-2">
-              <div>
-                <h2
-                  id="cutoff-label"
-                  className="text-xs font-semibold tracking-wider text-muted-foreground uppercase"
-                >
-                  Cutoff time · day before each delivery
-                  <NoteRef id={2} onOpen={openNote} />
-                </h2>
-                <p className="text-xs text-muted-foreground">
-                  Every day uses the latest forecast published by this time on
-                  the day before. All times GMT.
-                </p>
-              </div>
-              <ToggleGroup
-                aria-label="Cutoff time, GMT"
-                variant="outline"
-                size="sm"
-                spacing={1}
-                value={[cutoff]}
-                onValueChange={(value: string[]) => {
-                  if (value[0]) selectCutoff(value[0]);
-                }}
-                className="grid w-full grid-cols-6 sm:grid-cols-8 lg:grid-cols-12"
-              >
-                {cutoffs.map((time) => (
-                  <ToggleGroupItem
-                    key={time}
-                    value={time}
-                    className="w-full tabular-nums data-pressed:border-primary data-pressed:bg-primary data-pressed:text-primary-foreground"
-                  >
-                    {time}
-                  </ToggleGroupItem>
-                ))}
-              </ToggleGroup>
-              {data && <ReleaseNotice {...releaseInfo(data.cutoffs, cutoff)} />}
-            </section>
-          </CardContent>
-        </Card>
-
+      <SiteHeader
+        active="monthly"
+        cutoff={cutoff}
+        readout={`January 2026 · cutoff ${cutoff}, day before delivery`}
+      />
+      <Sheet panel={panel} legend={legend}>
         {error ? (
           <Alert variant="destructive">
             <TriangleAlertIcon />
@@ -172,157 +176,88 @@ export default function MonthlyPage() {
             </AlertDescription>
           </Alert>
         ) : !data ? (
-          <Card>
-            <CardContent className="grid h-96 place-items-center text-sm text-muted-foreground">
-              Loading monthly overview…
-            </CardContent>
-          </Card>
+          <div className="grid h-96 place-items-center rounded-[var(--radius)] border-[1.5px] border-dashed border-border text-sm text-muted-foreground">
+            Loading monthly overview…
+          </div>
         ) : (
           <div
             aria-busy={loading}
-            className={`grid gap-6 transition-opacity ${loading ? "opacity-60" : ""}`}
+            className={`grid gap-10 transition-opacity duration-200 ${loading ? "opacity-60" : ""}`}
           >
-            <Headline summary={data.summary} onOpenNote={openNote} />
+            <Headline
+              summary={data.summary}
+              cutoff={data.cutoff}
+              onOpenNote={openNote}
+            />
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">
+            <Figure
+              title={
+                <>
                   Forecast vs actual, day by day
                   <NoteRef id={5} onOpen={openNote} />
-                </CardTitle>
-                <CardDescription>
-                  Daily average generation at the {data.cutoff} cutoff. Click a
-                  day to open it.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="grid gap-3">
-                <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                  <span className="flex items-center gap-1.5">
-                    <Swatch color={chartConfig.forecast.color} />
-                    Forecast
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <Swatch color={chartConfig.actual.color} dashed />
-                    Actual
-                  </span>
-                  <span className="ml-auto">MW · daily average</span>
-                </div>
-                <DailyChart days={data.days} cutoff={data.cutoff} />
-              </CardContent>
-            </Card>
+                </>
+              }
+              description={`Daily average MW at the ${data.cutoff} cutoff, shaded by miss depth. Click a day to open it.`}
+            >
+              <DailyChart days={data.days} cutoff={data.cutoff} />
+            </Figure>
 
-            <CalendarCard days={data.days} cutoff={data.cutoff} />
+            <CalendarFigure days={data.days} cutoff={data.cutoff} />
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">
+            <Figure
+              title={
+                <>
                   When in the day do misses happen?
                   <NoteRef id={4} onOpen={openNote} />
-                </CardTitle>
-                <CardDescription>
-                  Average error for each half-hour, across all January days.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="grid gap-3">
-                <TimeOfDayInsight rows={data.time_of_day} />
-                <ErrorLegend />
-                <TimeOfDayChart rows={data.time_of_day} />
-              </CardContent>
-            </Card>
+                </>
+              }
+              description={<TimeOfDayInsight rows={data.time_of_day} />}
+              aside={<ErrorLegend />}
+            >
+              <TimeOfDayChart rows={data.time_of_day} />
+            </Figure>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">
+            <Figure
+              title={
+                <>
                   Does a later cutoff help?
                   <NoteRef id={6} onOpen={openNote} />
-                </CardTitle>
-                <CardDescription>
-                  Month accuracy for every cutoff. Click a point to select it.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="grid gap-3">
+                </>
+              }
+              description={
                 <CutoffInsight rows={data.cutoffs} selected={data.cutoff} />
-                <CutoffChart
-                  rows={data.cutoffs}
-                  selected={data.cutoff}
-                  onSelect={selectCutoff}
-                />
-              </CardContent>
-            </Card>
+              }
+            >
+              <CutoffChart
+                rows={data.cutoffs}
+                selected={data.cutoff}
+                onSelect={selectCutoff}
+              />
+            </Figure>
           </div>
         )}
 
-        <Collapsible open={notesOpen} onOpenChange={setNotesOpen}>
-          <Card size="sm">
-            <CardHeader>
-              <CollapsibleTrigger
-                render={
-                  <Button
-                    variant="ghost"
-                    className="-mx-2 justify-between font-medium"
-                  />
-                }
-              >
-                Assumptions & methodology
-                <ChevronDownIcon
-                  className={notesOpen ? "rotate-180 transition" : "transition"}
-                />
-              </CollapsibleTrigger>
-            </CardHeader>
-            <CollapsibleContent>
-              <CardContent>
-                <Notes data={data} />
-              </CardContent>
-            </CollapsibleContent>
-          </Card>
-        </Collapsible>
-      </main>
+        <NotesPanel
+          open={notesOpen}
+          onOpenChange={setNotesOpen}
+          notes={notesFor(data)}
+        />
+      </Sheet>
     </div>
-  );
-}
-
-function NoteRef({ id, onOpen }: { id: number; onOpen: (id: number) => void }) {
-  return (
-    <button
-      type="button"
-      onClick={() => onOpen(id)}
-      className="ml-0.5 align-super text-[0.65rem] font-medium text-muted-foreground hover:text-foreground"
-      aria-label={`Assumption ${id}`}
-    >
-      [{id}]
-    </button>
-  );
-}
-
-function Swatch({
-  color,
-  dashed = false,
-}: {
-  color: string;
-  dashed?: boolean;
-}) {
-  return (
-    <span
-      aria-hidden="true"
-      className="inline-block h-0 w-4 border-t-2"
-      style={{ borderColor: color, borderStyle: dashed ? "dashed" : "solid" }}
-    />
   );
 }
 
 function ErrorLegend() {
   return (
-    <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+    <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs font-medium text-muted-foreground">
       {(["over", "under"] as const).map((key) => (
         <span key={key} className="flex items-center gap-1.5">
           <span
             aria-hidden="true"
-            className="size-2.5 rounded-[2px]"
+            className="size-3 rounded-[2px]"
             style={{ background: chartConfig[key].color }}
           />
-          {key === "over"
-            ? "Above 0: forecast too high"
-            : "Below 0: forecast too low"}
+          {key === "over" ? "Forecast too high" : "Forecast too low"}
         </span>
       ))}
     </div>
@@ -331,9 +266,11 @@ function ErrorLegend() {
 
 function Headline({
   summary,
+  cutoff,
   onOpenNote,
 }: {
   summary: Summary;
+  cutoff: string;
   onOpenNote: (id: number) => void;
 }) {
   const tooHigh = share(
@@ -346,62 +283,61 @@ function Headline({
       : summary.mean_error >= 0
         ? "too high"
         : "too low";
+  const note = <NoteRef id={5} onOpen={onOpenNote} />;
   return (
-    <section aria-label="January summary" className="grid gap-3">
-      <div className="grid grid-cols-3 gap-px overflow-hidden rounded-xl border bg-border lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
-        <div className="col-span-3 grid gap-1 bg-card p-4 lg:col-span-1">
-          <span className="text-xs text-muted-foreground">
-            Direction
-            <NoteRef id={3} onOpen={onOpenNote} />
-            <NoteRef id={4} onOpen={onOpenNote} />
-          </span>
-          <strong className="text-2xl font-medium tabular-nums">
-            Too high {tooHigh}% of the time
-          </strong>
-          <span className="text-xs text-muted-foreground">
-            {summary.mean_error !== null &&
-              `Forecast ${signed(summary.mean_error)} MW ${direction} on average · `}
-            {number(summary.overestimated_intervals)} of{" "}
-            {number(summary.matched_intervals)} half-hours
-          </span>
-        </div>
-        {[
+    <section aria-label="January summary" className="grid gap-5">
+      <header className="grid gap-2">
+        <h1 className="text-3xl font-extrabold tracking-[-0.03em] text-balance sm:text-4xl">
+          January at {cutoff}: the forecast was{" "}
+          <span className="text-over-ink">too high {tooHigh}% of the time</span>
+          <NoteRef id={3} onOpen={onOpenNote} />
+          <NoteRef id={4} onOpen={onOpenNote} />
+        </h1>
+        <p className="text-muted-foreground">
+          {summary.mean_error !== null &&
+            `On average the forecast was ${signed(summary.mean_error)} MW ${direction}, `}
+          {number(summary.overestimated_intervals)} of{" "}
+          {number(summary.matched_intervals)} half-hours ran high.
+        </p>
+      </header>
+      <StatStrip
+        items={[
           {
-            label: "Accuracy",
+            label: <>Average miss direction{note}</>,
+            value:
+              summary.mean_error === null
+                ? "—"
+                : `${signed(summary.mean_error)} MW`,
+            hint: "Forecast minus actual, per half-hour",
+            tone:
+              summary.mean_error === null
+                ? undefined
+                : summary.mean_error >= 0
+                  ? "over"
+                  : "under",
+          },
+          {
+            label: <>Accuracy{note}</>,
             value: percent(summary.accuracy),
             hint: "100% minus total error ÷ total actual",
           },
           {
-            label: "MAE",
+            label: <>MAE{note}</>,
             value: `${number(summary.mae)} MW`,
             hint: "Typical size of a miss",
           },
           {
-            label: "RMSE",
+            label: <>RMSE{note}</>,
             value: `${number(summary.rmse)} MW`,
             hint: "Weights large misses more",
           },
-        ].map((item) => (
-          <div
-            key={item.label}
-            className="grid content-start gap-1 bg-card p-3 sm:p-4"
-          >
-            <span className="text-xs text-muted-foreground">
-              {item.label}
-              <NoteRef id={5} onOpen={onOpenNote} />
-            </span>
-            <strong className="text-lg font-medium tabular-nums sm:text-2xl">
-              {item.value}
-            </strong>
-            <span className="text-xs text-muted-foreground">{item.hint}</span>
-          </div>
-        ))}
-      </div>
+        ]}
+      />
     </section>
   );
 }
 
-function CalendarCard({
+function CalendarFigure({
   days,
   cutoff,
 }: {
@@ -409,79 +345,67 @@ function CalendarCard({
   cutoff: string;
 }) {
   const { best, worst } = extremes(days);
-  const scored = days.flatMap((day) =>
-    day.accuracy === null ? [] : [day.accuracy],
-  );
-  const [low, high] = [Math.min(...scored), Math.max(...scored)];
-  // 0 for the best day, 1 for the worst.
-  const severity = (accuracy: number) =>
-    high === low ? 0 : (high - accuracy) / (high - low);
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-lg">Every day at a glance</CardTitle>
-        <CardDescription>
-          Accuracy per delivery day. Darker means a bigger miss. Click a day to
-          open it.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="grid gap-4 md:grid-cols-[minmax(0,1fr)_14rem] md:gap-6">
+    <Figure
+      title="Every day at a glance"
+      description="Accuracy per delivery day, shaded by the same depth ramp. Click a day to open it."
+    >
+      <div className="grid gap-5 md:grid-cols-[minmax(0,1fr)_15rem] md:gap-6">
         <div className="grid gap-1.5" role="grid" aria-label="January 2026">
-          <div className="grid grid-cols-7 gap-1.5 text-center text-xs text-muted-foreground">
+          <div className="grid grid-cols-7 gap-1.5 text-center text-xs font-bold tracking-[0.08em] text-grid-ink uppercase">
             {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((name) => (
               <span key={name}>{name}</span>
             ))}
           </div>
           {calendarWeeks(days).map((week, index) => (
             <div key={index} role="row" className="grid grid-cols-7 gap-1.5">
-              {week.map((day, slot) =>
-                day ? (
+              {week.map((day, slot) => {
+                if (!day)
+                  return <span key={`empty-${slot}`} role="gridcell" />;
+                const step =
+                  day.accuracy === null ? 0 : accuracyStep(day.accuracy);
+                return (
                   <Link
                     key={day.delivery_date}
                     role="gridcell"
                     href={dailyHref(day.delivery_date, cutoff)}
                     aria-label={`${dayLabel(day.delivery_date)}: ${percent(day.accuracy)} accuracy`}
-                    className="group grid min-h-14 content-between rounded-md border p-1.5 transition-colors hover:border-foreground/40 sm:min-h-16 sm:p-2"
+                    className={`grid min-h-14 content-between rounded-[calc(var(--radius)-2px)] border border-frame/15 p-1.5 transition-[transform,box-shadow] duration-150 hover:-translate-y-0.5 hover:shadow-[0_6px_14px_-6px_rgb(0_0_0/0.35)] sm:min-h-16 sm:p-2 ${step === 4 ? "text-white dark:text-band-foreground" : "text-foreground"}`}
                     style={{
-                      background:
-                        day.accuracy === null
-                          ? undefined
-                          : `rgba(${HEAT}, ${0.06 + 0.64 * severity(day.accuracy)})`,
+                      background: step ? `var(--over-${step})` : undefined,
                     }}
                   >
-                    <span className="flex items-center justify-between text-xs text-muted-foreground tabular-nums group-hover:text-foreground">
+                    <span className="flex items-center justify-between text-xs font-semibold tabular-nums">
                       {Number(day.delivery_date.slice(8))}
                       {(day === best || day === worst) && (
-                        <span className="hidden text-[0.65rem] font-medium text-foreground sm:inline">
+                        <span className="hidden rounded-full bg-background px-1.5 py-0.5 text-[0.65rem] font-bold text-foreground sm:inline">
                           {day === best ? "Best" : "Worst"}
                         </span>
                       )}
                     </span>
-                    <span className="text-right text-xs font-medium tabular-nums sm:text-sm">
+                    <span className="text-right text-sm font-bold tabular-nums sm:text-base">
                       {percent(day.accuracy, 0)}
                     </span>
                   </Link>
-                ) : (
-                  <span key={`empty-${slot}`} role="gridcell" />
-                ),
-              )}
+                );
+              })}
             </div>
           ))}
         </div>
         <div className="grid content-start gap-4 text-sm">
           {[
-            { label: "Best day", day: best },
-            { label: "Worst day", day: worst },
+            { label: "Best day", day: best, tone: "text-under-ink" },
+            { label: "Worst day", day: worst, tone: "text-over-ink" },
           ].map(
-            ({ label, day }) =>
+            ({ label, day, tone }) =>
               day && (
                 <Link
                   key={label}
                   href={dailyHref(day.delivery_date, cutoff)}
-                  className="grid gap-0.5 rounded-lg border p-3 hover:border-foreground/40"
+                  className="grid gap-0.5 rounded-[var(--radius)] border-[1.5px] border-frame p-3 transition-colors hover:bg-accent"
                 >
-                  <span className="text-xs text-muted-foreground">{label}</span>
-                  <span className="font-medium">
+                  <span className={`text-xs font-bold ${tone}`}>{label}</span>
+                  <span className="text-lg font-extrabold">
                     {dayLabel(day.delivery_date, false).replace(" 2026", "")}
                   </span>
                   <span className="text-xs text-muted-foreground tabular-nums">
@@ -490,22 +414,22 @@ function CalendarCard({
                 </Link>
               ),
           )}
-          <div className="grid gap-1.5 text-xs text-muted-foreground">
-            <div
-              aria-hidden="true"
-              className="h-2 rounded-full"
-              style={{
-                background: `linear-gradient(to right, rgba(${HEAT}, 0.06), rgba(${HEAT}, 0.7))`,
-              }}
-            />
-            <div className="flex justify-between tabular-nums">
-              <span>{percent(high, 0)}</span>
-              <span>{percent(low, 0)}</span>
-            </div>
+          <div className="grid gap-1.5 text-xs">
+            <span className="font-bold">Day accuracy</span>
+            {ACCURACY_STEPS.map((step, index) => (
+              <span key={step.label} className="flex items-center gap-2">
+                <span
+                  aria-hidden="true"
+                  className="h-3.5 w-6 rounded-[2px] border border-frame/15"
+                  style={{ background: `var(--over-${index + 1})` }}
+                />
+                {step.label}
+              </span>
+            ))}
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </Figure>
   );
 }
 
@@ -517,11 +441,11 @@ function TimeOfDayInsight({ rows }: { rows: MonthlyData["time_of_day"] }) {
   );
   const [largest, smallest] = [sorted[0], sorted.at(-1)!];
   return (
-    <p className="text-sm">
+    <p className="max-w-[70ch]">
       Largest average miss at{" "}
-      <b className="font-medium tabular-nums">{largest.time}</b> (
+      <b className="font-bold tabular-nums">{largest.time}</b> (
       {signed(largest.mean_error ?? 0)} MW), smallest at{" "}
-      <b className="font-medium tabular-nums">{smallest.time}</b> (
+      <b className="font-bold tabular-nums">{smallest.time}</b> (
       {signed(smallest.mean_error ?? 0)} MW).
     </p>
   );
@@ -544,11 +468,11 @@ function CutoffInsight({
   );
   const current = rows.find((row) => row.cutoff === selected);
   return (
-    <p className="text-sm">
+    <p className="max-w-[70ch]">
       Accuracy ranges from{" "}
-      <b className="font-medium tabular-nums">{percent(worst.accuracy)}</b> (
+      <b className="font-bold tabular-nums">{percent(worst.accuracy)}</b> (
       {worst.cutoff}) to{" "}
-      <b className="font-medium tabular-nums">{percent(best.accuracy)}</b> (
+      <b className="font-bold tabular-nums">{percent(best.accuracy)}</b> (
       {best.cutoff}), a spread of{" "}
       {((best.accuracy ?? 0) - (worst.accuracy ?? 0)).toFixed(1)} points.
       {current && current.cutoff !== best.cutoff && (
@@ -563,7 +487,7 @@ function CutoffInsight({
   );
 }
 
-function Notes({ data }: { data: MonthlyData | null }) {
+function notesFor(data: MonthlyData | null) {
   const notes = [
     {
       title: "Delivery month",
@@ -594,23 +518,5 @@ function Notes({ data }: { data: MonthlyData | null }) {
       body: `Actual values were not available at any cutoff; this page is a retrospective evaluation. Both series are GB operational-metered wind. Actuals are a snapshot${data ? ` retrieved ${dayLabel(data.snapshot.retrieved_at, false)}` : ""} and can reflect curtailment and availability as well as weather.`,
     },
   ];
-  return (
-    <ol className="grid max-w-3xl gap-4 text-sm">
-      {notes.map((note, index) => (
-        <li
-          key={note.title}
-          id={`note-${index + 1}`}
-          className="grid scroll-mt-24 grid-cols-[2rem_1fr] gap-x-2"
-        >
-          <span className="text-muted-foreground tabular-nums">
-            [{index + 1}]
-          </span>
-          <div className="grid gap-1">
-            <h3 className="font-medium">{note.title}</h3>
-            <p className="leading-relaxed text-muted-foreground">{note.body}</p>
-          </div>
-        </li>
-      ))}
-    </ol>
-  );
+  return notes;
 }

@@ -14,7 +14,13 @@ import {
   YAxis,
 } from "recharts";
 import { ChartContainer, ChartTooltip } from "@/components/ui/chart";
-import { chartConfig } from "../forecast-chart";
+import {
+  AXIS_TICK,
+  GRID_STROKE,
+  chartConfig,
+  useMotion,
+} from "../forecast-chart";
+import { depth } from "../sheet";
 import { dayLabel, number, signed } from "../forecast-data";
 import {
   dailyHref,
@@ -42,8 +48,8 @@ function TooltipBox({
   children: React.ReactNode;
 }) {
   return (
-    <div className="grid min-w-56 gap-1.5 rounded-lg border bg-popover px-3 py-2.5 text-xs text-popover-foreground shadow-md">
-      <p className="font-medium tabular-nums">{title}</p>
+    <div className="grid min-w-56 gap-1.5 rounded-[var(--radius)] border-[1.5px] border-frame bg-popover px-3 py-2.5 text-xs text-popover-foreground shadow-[0_6px_18px_-6px_rgb(0_0_0/0.25)]">
+      <p className="font-bold tabular-nums">{title}</p>
       {children}
     </div>
   );
@@ -97,9 +103,18 @@ export function DailyChart({
   cutoff: string;
 }) {
   const router = useRouter();
+  const motion = useMotion();
   const data = days.map((day) => ({
     ...day,
     label: dayNumber(day.delivery_date),
+    // Band between the day's average forecast and actual.
+    gap:
+      day.mean_forecast === null || day.mean_actual === null
+        ? null
+        : [
+            Math.min(day.mean_forecast, day.mean_actual),
+            Math.max(day.mean_forecast, day.mean_actual),
+          ],
   }));
   // Mondays, so the axis reads as weeks.
   const ticks = data
@@ -108,22 +123,24 @@ export function DailyChart({
   return (
     <ChartContainer
       config={chartConfig}
-      className="aspect-auto h-[300px] w-full cursor-pointer"
+      className="aspect-auto h-[320px] w-full cursor-pointer"
     >
       <ComposedChart
         data={data}
         margin={MARGIN}
+        barCategoryGap="30%"
         accessibilityLayer
         onClick={(state) => {
           const day = data.find((d) => d.label === String(state?.activeLabel));
           if (day) router.push(dailyHref(day.delivery_date, cutoff));
         }}
       >
-        <CartesianGrid vertical={false} />
+        <CartesianGrid stroke={GRID_STROKE} />
         <XAxis
           dataKey="label"
           ticks={ticks}
           tickFormatter={(label: string) => `${label} Jan`}
+          tick={AXIS_TICK}
           tickLine={false}
           axisLine={false}
           tickMargin={8}
@@ -132,6 +149,7 @@ export function DailyChart({
           width={Y_AXIS_WIDTH}
           domain={[0, "auto"]}
           tickFormatter={(value: number) => number(value)}
+          tick={AXIS_TICK}
           tickLine={false}
           axisLine={false}
         />
@@ -155,20 +173,36 @@ export function DailyChart({
             );
           }}
         />
+        <Bar
+          dataKey="gap"
+          radius={2}
+          isAnimationActive={motion}
+          animationDuration={700}
+          animationEasing="ease-out"
+        >
+          {data.map((day) => (
+            <Cell
+              key={day.delivery_date}
+              fill={
+                day.mean_error === null ? "transparent" : depth(day.mean_error)
+              }
+            />
+          ))}
+        </Bar>
         <Line
-          dataKey="mean_forecast"
-          stroke="var(--color-forecast)"
-          strokeWidth={2}
-          dot={{ r: 2.5, fill: "var(--color-forecast)" }}
+          dataKey="mean_actual"
+          stroke="var(--color-actual)"
+          strokeWidth={2.5}
+          strokeDasharray="6 4"
+          dot={{ r: 3, fill: "var(--color-actual)", strokeDasharray: "" }}
           activeDot={{ r: 5 }}
           isAnimationActive={false}
         />
         <Line
-          dataKey="mean_actual"
-          stroke="var(--color-actual)"
-          strokeWidth={2}
-          strokeDasharray="5 4"
-          dot={{ r: 2.5, fill: "var(--color-actual)", strokeDasharray: "" }}
+          dataKey="mean_forecast"
+          stroke="var(--color-forecast)"
+          strokeWidth={3}
+          dot={{ r: 3, fill: "var(--color-forecast)" }}
           activeDot={{ r: 5 }}
           isAnimationActive={false}
         />
@@ -187,10 +221,11 @@ export function TimeOfDayChart({ rows }: { rows: MonthlyData["time_of_day"] }) {
         barCategoryGap={1}
         accessibilityLayer
       >
-        <CartesianGrid vertical={false} />
+        <CartesianGrid stroke={GRID_STROKE} />
         <XAxis
           dataKey="time"
           ticks={rows.filter((_, i) => i % 6 === 0).map((row) => row.time)}
+          tick={AXIS_TICK}
           tickLine={false}
           axisLine={false}
           tickMargin={8}
@@ -198,10 +233,11 @@ export function TimeOfDayChart({ rows }: { rows: MonthlyData["time_of_day"] }) {
         <YAxis
           width={Y_AXIS_WIDTH}
           tickFormatter={(value: number) => signed(value)}
+          tick={AXIS_TICK}
           tickLine={false}
           axisLine={false}
         />
-        <ReferenceLine y={0} stroke="var(--muted-foreground)" />
+        <ReferenceLine y={0} stroke="var(--frame)" strokeWidth={1.5} />
         <ChartTooltip
           isAnimationActive={false}
           cursor={{ fill: "var(--muted)", opacity: 0.5 }}
@@ -280,10 +316,11 @@ export function CutoffChart({
           if (state?.activeLabel) onSelect(String(state.activeLabel));
         }}
       >
-        <CartesianGrid vertical={false} />
+        <CartesianGrid stroke={GRID_STROKE} />
         <XAxis
           dataKey="cutoff"
           ticks={rows.filter((_, i) => i % 3 === 0).map((row) => row.cutoff)}
+          tick={AXIS_TICK}
           tickLine={false}
           axisLine={false}
           tickMargin={8}
@@ -293,6 +330,7 @@ export function CutoffChart({
           domain={domain}
           allowDecimals={false}
           tickFormatter={(value: number) => `${value}%`}
+          tick={AXIS_TICK}
           tickLine={false}
           axisLine={false}
         />
