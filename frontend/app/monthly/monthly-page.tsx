@@ -360,8 +360,7 @@ function CalendarFigure({
           {calendarWeeks(days).map((week, index) => (
             <div key={index} role="row" className="grid grid-cols-7 gap-1.5">
               {week.map((day, slot) => {
-                if (!day)
-                  return <span key={`empty-${slot}`} role="gridcell" />;
+                if (!day) return <span key={`empty-${slot}`} role="gridcell" />;
                 const step =
                   day.accuracy === null ? 0 : accuracyStep(day.accuracy);
                 return (

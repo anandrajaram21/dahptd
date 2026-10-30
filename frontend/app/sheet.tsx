@@ -78,13 +78,22 @@ export function PanelGroup({
   );
 }
 
+/** "13:00" → "1:00 pm"; values stay 24-hour, only the label changes. */
+export function twelveHour(time: string) {
+  const [h, m] = time.split(":").map(Number);
+  return {
+    clock: `${h % 12 || 12}:${String(m).padStart(2, "0")}`,
+    half: h < 12 ? "am" : "pm",
+  };
+}
+
 const minutes = (time: string) => {
   const [h, m] = time.split(":").map(Number);
   return h * 60 + m;
 };
 
 /**
- * Whole-hour cutoffs as a survey grid. Hours that are the first to see a new
+ * Whole-hour cutoffs as a grid of 12-hour times. Hours that are the first to see a new
  * release carry a blue mark, so the publication rhythm is visible at a glance.
  */
 export function CutoffGrid({
@@ -110,29 +119,32 @@ export function CutoffGrid({
       onValueChange={(next: string[]) => {
         if (next[0]) onChange(next[0]);
       }}
-      className="grid w-full grid-cols-6 overflow-hidden rounded-[var(--radius)] border-[1.5px] border-frame bg-card"
+      className="grid w-full grid-cols-4 overflow-hidden rounded-[var(--radius)] border-[1.5px] border-frame bg-card"
     >
       {cutoffs.map((time, index) => {
         const release = releaseFor(time);
+        const { clock, half } = twelveHour(time);
         return (
           <ToggleGroupItem
             key={time}
             value={time}
+            aria-label={`${clock} ${half}`}
             title={
               release
-                ? `${time}: first cutoff to use the ${release} release`
-                : `${time}`
+                ? `${clock} ${half}: first cutoff to use the ${release} release`
+                : `${clock} ${half} (${time} GMT)`
             }
             className={cn(
-              "relative h-10 w-full min-w-0 rounded-none border-border px-0 text-[0.8rem] font-semibold tabular-nums",
+              "relative h-10 w-full min-w-0 gap-1 rounded-none! border-border px-0 text-[0.8rem] font-semibold tabular-nums",
               "hover:bg-accent hover:text-accent-foreground",
               "data-pressed:bg-primary data-pressed:text-primary-foreground",
-              index % 6 !== 5 && "border-r",
-              index < cutoffs.length - 6 && "border-b",
+              index % 4 !== 3 && "border-r",
+              index < cutoffs.length - 4 && "border-b",
               release && "text-grid-ink",
             )}
           >
-            {time.slice(0, 2)}
+            {clock}
+            <span className="text-[0.7rem] font-medium opacity-75">{half}</span>
             {release && (
               <span
                 aria-hidden="true"
@@ -226,9 +238,7 @@ export function DepthKey() {
   const labels = ["<500", "500+", "1,000+", "2,000+"];
   return (
     <div className="grid gap-2 text-xs">
-      <h2 className="font-bold tracking-[0.12em] uppercase">
-        Miss depth · MW
-      </h2>
+      <h2 className="font-bold tracking-[0.12em] uppercase">Miss depth · MW</h2>
       <div className="grid grid-cols-[4.25rem_repeat(4,minmax(0,1fr))] items-center gap-x-1 gap-y-1.5 text-muted-foreground">
         {(["over", "under"] as const).map((tone) => (
           <div key={tone} className="contents">

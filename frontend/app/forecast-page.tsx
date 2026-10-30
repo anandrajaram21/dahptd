@@ -330,7 +330,10 @@ export default function ForecastPage() {
                     id="hindsight-title"
                     className="flex items-center gap-2 text-xl font-bold tracking-[-0.015em]"
                   >
-                    <EyeIcon aria-hidden="true" className="size-5 text-grid-ink" />
+                    <EyeIcon
+                      aria-hidden="true"
+                      className="size-5 text-grid-ink"
+                    />
                     Hindsight: how this forecast did
                   </h2>
                   <p className="max-w-[70ch] text-sm text-muted-foreground">
