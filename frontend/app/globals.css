@@ -143,8 +143,9 @@
   --input: #42607a;
   --ring: #f25fa9;
 
-  --band: #f37021;
-  --band-foreground: #1d2a33;
+  /* Night sheet takes the Landranger cover's magenta instead of Explorer orange. */
+  --band: #a3165f;
+  --band-foreground: #ffffff;
   --panel: #112130;
   --frame: #b9cad6;
   --grid: #1f3647;

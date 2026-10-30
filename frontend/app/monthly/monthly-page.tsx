@@ -370,7 +370,7 @@ function CalendarFigure({
                     role="gridcell"
                     href={dailyHref(day.delivery_date, cutoff)}
                     aria-label={`${dayLabel(day.delivery_date)}: ${percent(day.accuracy)} accuracy`}
-                    className={`grid min-h-14 content-between rounded-[calc(var(--radius)-2px)] border border-frame/15 p-1.5 transition-[transform,box-shadow] duration-150 hover:-translate-y-0.5 hover:shadow-[0_6px_14px_-6px_rgb(0_0_0/0.35)] sm:min-h-16 sm:p-2 ${step === 4 ? "text-white dark:text-band-foreground" : "text-foreground"}`}
+                    className={`grid min-h-14 content-between rounded-[calc(var(--radius)-2px)] border border-frame/15 p-1.5 transition-[transform,box-shadow] duration-150 hover:-translate-y-0.5 hover:shadow-[0_6px_14px_-6px_rgb(0_0_0/0.35)] sm:min-h-16 sm:p-2 ${step === 4 ? "text-white dark:text-background" : "text-foreground"}`}
                     style={{
                       background: step ? `var(--over-${step})` : undefined,
                     }}
