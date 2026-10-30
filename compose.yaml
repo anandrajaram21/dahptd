@@ -21,6 +21,9 @@ services:
       NEXT_TELEMETRY_DISABLED: "1"
     volumes:
       - ./frontend/app:/app/app
+      - ./frontend/components:/app/components
+      - ./frontend/hooks:/app/hooks
+      - ./frontend/lib:/app/lib
     depends_on:
       backend:
         condition: service_healthy
