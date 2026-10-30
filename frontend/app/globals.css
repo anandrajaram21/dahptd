@@ -92,20 +92,21 @@
   /* Series and states. */
   --forecast: #c8177b;
   --actual: #0080c6;
-  --over: #d9660f;
-  --over-ink: #a8490a;
-  --under: #3f9a49;
-  --under-ink: #2a7533;
+  /* Amber / blue stays distinct with deuteranopia; labels also name direction. */
+  --over: #b87500;
+  --over-ink: #875000;
+  --under: #0072b2;
+  --under-ink: #005a8c;
 
   /* One fixed four-step miss-depth ramp, used everywhere misses are shaded. */
-  --over-1: #fde5d1;
-  --over-2: #f9c293;
-  --over-3: #f29a52;
-  --over-4: #b5520b;
-  --under-1: #dcf0de;
-  --under-2: #b2deb8;
-  --under-3: #79c283;
-  --under-4: #3f9a49;
+  --over-1: #fff0c2;
+  --over-2: #f5d477;
+  --over-3: #e6ab32;
+  --over-4: #9c6400;
+  --under-1: #deeffa;
+  --under-2: #a9d2ef;
+  --under-3: #65a9d7;
+  --under-4: #0072b2;
 
   --chart-1: var(--forecast);
   --chart-2: var(--actual);
@@ -153,19 +154,19 @@
 
   --forecast: #f25fa9;
   --actual: #4fb6ef;
-  --over: #f08a3c;
-  --over-ink: #f8ab6e;
-  --under: #5cc06a;
-  --under-ink: #84d490;
+  --over: #e6ab32;
+  --over-ink: #f5d477;
+  --under: #65a9d7;
+  --under-ink: #a9d2ef;
 
-  --over-1: #33251b;
-  --over-2: #5f3818;
-  --over-3: #a2561c;
-  --over-4: #f08a3c;
-  --under-1: #183020;
-  --under-2: #22502c;
-  --under-3: #378a44;
-  --under-4: #5cc06a;
+  --over-1: #382d14;
+  --over-2: #66501b;
+  --over-3: #88631b;
+  --over-4: #e6ab32;
+  --under-1: #183247;
+  --under-2: #245574;
+  --under-3: #377fa8;
+  --under-4: #65a9d7;
 }
 
 @layer base {

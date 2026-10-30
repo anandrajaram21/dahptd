@@ -281,7 +281,8 @@ export function Figure({
 }) {
   return (
     <section className={cn("grid gap-4", className)}>
-      <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-2">
+      {/* A trailing inset keeps a right-aligned aside off the content edge. */}
+      <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-2 pe-2">
         <div className="grid gap-1">
           <h2 className="text-xl font-bold tracking-[-0.015em]">{title}</h2>
           {description && (

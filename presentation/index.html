@@ -10,8 +10,8 @@
   :root {
     --band: #f37021; --ink: #1d2a33; --muted: #4a5d6b; --paper: #ffffff; --panel: #f2f8fc;
     --magenta: #c8177b; --blue: #0067a5; --actual: #0080c6; --grid: #d5e9f5; --line: #c5dcea;
-    --over: #d9660f; --over-ink: #a8490a; --over-1: #fde5d1; --over-2: #f9c293; --over-3: #f29a52; --over-4: #b5520b;
-    --under: #3f9a49; --under-ink: #2a7533;
+    --over: #b87500; --over-ink: #875000; --over-1: #fff0c2; --over-2: #f5d477; --over-3: #e6ab32; --over-4: #9c6400;
+    --under: #0072b2; --under-ink: #005a8c;
     --sans: "Hanken Grotesk", ui-sans-serif, system-ui, sans-serif;
     --mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
     --ease: cubic-bezier(.2,.75,.2,1);
@@ -111,6 +111,7 @@
   .lane .ck::after { content: ""; position: absolute; right: -28px; top: 50%; width: 26px; height: 2px; background: var(--ink); }
   .lane .ck:last-child::after { display: none; }
   .lane .ck svg { flex: none; }
+  .lane .ck circle { fill: var(--blue); }
   .mark-h { display: flex; align-items: center; gap: 12px; }
   .mark-h i { width: 18px; height: 18px; border-radius: 4px; flex: none; }
   .road { position: relative; color: var(--ink); background: var(--panel); border: 2px solid var(--ink); border-right: 0; padding: 24px 40px 24px 26px; font-size: 23px; font-weight: 700; line-height: 1.3; }
@@ -140,15 +141,15 @@
 
 <section class="slide field orange" data-part="Part 1 · Pilot walkthrough">
   <div class="wordmark rise">dahptd</div>
-  <h1 class="rise d1" style="margin-top:96px; max-width:700px">Know the wind you can count on, before you buy.</h1>
-  <p class="rise d2" style="margin-top:34px; max-width:560px; color:var(--ink); font-size:26px; font-weight:500">A January 2026 pilot for your day-ahead desk: the GB wind forecast you actually had at decision time, and how far to trust it.</p>
+  <h1 class="rise d1" style="margin-top:96px; max-width:700px">How reliable is tomorrow's wind forecast?</h1>
+  <p class="rise d2" style="margin-top:34px; max-width:560px; color:var(--ink); font-size:26px; font-weight:500">GB wind · January 2026 pilot</p>
   <div class="rise d3" style="margin-top:auto; display:flex; gap:12px"><span class="chip">Part 1 · Pilot walkthrough</span><span class="chip light">Part 2 · Technical review</span></div>
   <div class="hero-shot"><img src="shots/daily-actuals.webp" alt="The dahptd daily forecast page for 16 January 2026 with actuals shown"></div>
-  <aside class="notes">~0:15. "We built dahptd around one question your desk faces every morning: how much wind can we count on tomorrow, and how much should we trust that number?"</aside>
+  <aside class="notes">This pilot checks how reliable the available wind forecast was before buying power. We replay January 2026 using only forecasts published by the chosen cutoff, then show how the app is built.</aside>
 </section>
 
 <section class="slide sheet" data-part="Part 1 · Pilot walkthrough">
-  <div class="top"><h2 class="rise">Every morning you buy tomorrow's power on a forecast, not on the weather.</h2><span class="part">1 · The decision</span></div>
+  <div class="top"><h2 class="rise">Buy before delivery. Use only what was known.</h2><span class="part">1 · The decision</span></div>
   <svg viewBox="0 0 1456 560" width="1456" height="620" style="flex:none; margin-top:20px" aria-label="Timeline of forecast releases on the day before delivery">
     <!-- Day before delivery -->
     <text x="0" y="22" font-size="22" font-weight="600" fill="#4a5d6b">Thu 15 Jan, the day before delivery</text>
@@ -169,7 +170,9 @@
     </g>
     <g class="reveal" data-step="2">
       <rect x="411" y="60" width="22" height="150" fill="#0067a5" opacity=".16"/>
-      <text x="422" y="228" font-size="17" font-weight="700" fill="#0067a5" text-anchor="middle">auctions close ~09:20–09:50</text>
+      <text x="422" y="228" font-size="17" font-weight="700" fill="#0067a5" text-anchor="middle">morning energy closes 09:20–09:50 GMT</text>
+      <line x1="685" y1="60" x2="685" y2="175" stroke="#0067a5" stroke-width="4"/>
+      <text x="695" y="82" font-size="17" font-weight="700" fill="#0067a5">15:30 GMT · EPEX 30-min</text>
       <line x1="397" y1="60" x2="397" y2="200" stroke="#c8177b" stroke-width="5"/>
       <text x="390" y="196" font-size="19" font-weight="800" fill="#c8177b" text-anchor="end">decide by e.g. 09:00</text>
       <line x1="442" y1="60" x2="442" y2="200" stroke="#4a5d6b" stroke-width="3" stroke-dasharray="6 6"/>
@@ -179,23 +182,38 @@
     <g class="reveal" data-step="3">
       <rect x="1100" y="40" width="356" height="160" rx="14" fill="#f37021"/>
       <text x="1124" y="92" font-size="28" font-weight="800" fill="#1d2a33">Fri 16 Jan: delivery</text>
-      <text x="1124" y="132" font-size="22" font-weight="600" fill="#1d2a33">Wind turns up as it turns up.</text>
-      <text x="1124" y="166" font-size="22" font-weight="600" fill="#1d2a33">The gap is bought late.</text>
+      <text x="1124" y="132" font-size="22" font-weight="600" fill="#1d2a33">Actual wind output arrives.</text>
+      <text x="1124" y="166" font-size="22" font-weight="600" fill="#1d2a33">Shortfalls need buying later.</text>
     </g>
     <g class="reveal" data-step="1">
-      <text x="0" y="280" font-size="30" font-weight="800" fill="#1d2a33">Elexon releases a new national wind forecast about 8 times a day.</text>
+      <text x="0" y="280" font-size="30" font-weight="800" fill="#1d2a33">Elexon publishes about 8 wind forecasts a day.</text>
     </g>
     <g class="reveal" data-step="3">
-      <text x="0" y="352" font-size="28" font-weight="500" fill="#4a5d6b">So two questions decide every purchase:</text>
-      <circle cx="22" cy="410" r="22" fill="#c8177b"/><text x="22" y="418" font-size="24" font-weight="800" fill="#fff" text-anchor="middle">1</text><text x="58" y="424" font-size="40" font-weight="800" fill="#c8177b">Which forecast did we actually have at our cutoff?</text>
-      <circle cx="22" cy="478" r="22" fill="#a8490a"/><text x="22" y="486" font-size="24" font-weight="800" fill="#fff" text-anchor="middle">2</text><text x="58" y="492" font-size="40" font-weight="800" fill="#a8490a">How wrong does that forecast tend to be, and which way?</text>
+      <circle cx="22" cy="410" r="22" fill="#c8177b"/><text x="22" y="418" font-size="24" font-weight="800" fill="#fff" text-anchor="middle">1</text><text x="58" y="424" font-size="40" font-weight="800" fill="#c8177b">Which forecast was available?</text>
+      <circle cx="22" cy="478" r="22" fill="var(--over-ink)"/><text x="22" y="486" font-size="24" font-weight="800" fill="#fff" text-anchor="middle">2</text><text x="58" y="492" font-size="40" font-weight="800" fill="var(--over-ink)">How far off was it?</text>
     </g>
   </svg>
-  <aside class="notes">~0:35. Step 1: releases arrive through the day before delivery. Step 2: the desk has to commit before the auction closes, so only runs published before the cutoff count. A real desk decides before the ~09:20–09:50 close, say 09:00. The pilot walkthrough uses its 10:00 default for illustration; the cutoff slide shows 09:00 gives almost identical accuracy. Step 3: the gap between forecast and reality gets bought late. dahptd answers both questions.</aside>
+  <aside class="notes">Forecasts update throughout the day; the relevant deadline depends on the auction. Morning energy gates close at 09:20 and 09:50 GMT, while EPEX's half-hourly auction closes at 15:30 GMT. The demo's 10:00 cutoff is after the morning gates but before the afternoon gate. Use a cutoff before the auction you intend to trade.</aside>
 </section>
 
 <section class="slide sheet" data-part="Part 1 · Pilot walkthrough">
-  <div class="top"><h2 class="rise"><span class="qn">1</span>Which forecast did your desk actually have?</h2><span class="part">2 · Daily view</span></div>
+  <div class="top"><h2 class="rise">Different auctions. Different deadlines.</h2><span class="part">1 · The decision</span></div>
+  <table class="rise d1" style="width:100%; border-collapse:collapse; font-size:25px; line-height:1.4; margin-top:24px">
+    <thead><tr style="text-align:left; color:var(--blue); border-bottom:3px solid var(--ink)"><th style="padding:18px 12px">Auction · D−1</th><th style="padding:18px 12px">Gate / window</th><th style="padding:18px 12px">Results</th></tr></thead>
+    <tbody>
+      <tr style="border-bottom:1px solid var(--line)"><td style="padding:22px 12px">EPEX SPOT GB · 60-minute energy</td><td style="padding:22px 12px"><b>09:20 GMT</b></td><td style="padding:22px 12px">From 09:30 GMT</td></tr>
+      <tr style="border-bottom:1px solid var(--line)"><td style="padding:22px 12px">N2EX · day-ahead energy</td><td style="padding:22px 12px"><b>09:50 GMT</b> / 10:50 CET</td><td style="padding:22px 12px">By 10:00 GMT / 11:00 CET</td></tr>
+      <tr style="border-bottom:1px solid var(--line); background:var(--panel)"><td style="padding:22px 12px"><b>EPEX SPOT GB · 30-minute energy</b></td><td style="padding:22px 12px"><b>15:30 GMT · 3:30 pm</b></td><td style="padding:22px 12px">From 15:45 GMT</td></tr>
+      <tr style="border-bottom:1px solid var(--line)"><td style="padding:22px 12px">Nemo Link · interconnector capacity</td><td style="padding:22px 12px"><b>09:00–09:30 CET</b> window</td><td style="padding:22px 12px">Separate capacity product</td></tr>
+    </tbody>
+  </table>
+  <p class="rise d2" style="margin-top:28px; font-size:22px">January timings: Nemo's window is 08:00–08:30 GMT. “30-minute” means delivery granularity, not auction duration.</p>
+  <p style="margin-top:auto; font-size:16px; color:var(--muted)">Sources: <a href="https://www.epexspot.com/sites/default/files/download_center_files/21-03-09_Trading%20Brochure.pdf">EPEX trading brochure</a> · <a href="https://support.nordpoolgroup.com/support/solutions/articles/8000088463-about-the-n2ex-day-ahead-auction">Nord Pool N2EX</a> · <a href="https://www.nemolink.co.uk/trade-with-us">Nemo Link</a>. Check operator calendars for other dates and daylight-saving conventions.</p>
+  <aside class="notes">There is more than one day-ahead auction. EPEX's hourly energy auction closes at 09:20 GMT, with results from 09:30. N2EX closes at 09:50 GMT, with results by 10:00. EPEX's half-hourly energy auction closes at 15:30 GMT, or 3:30 pm, with results from 15:45. Half-hourly describes delivery contracts, not the length of the auction. Nemo Link sells interconnector capacity, not energy; its 09:00–09:30 CET window is 08:00–08:30 GMT in January. Match the app's cutoff to the product and check the operator's calendar outside this January example.</aside>
+</section>
+
+<section class="slide sheet" data-part="Part 1 · Pilot walkthrough">
+  <div class="top"><h2 class="rise"><span class="qn">1</span>The forecast available at your cutoff</h2><span class="part">2 · Daily view</span></div>
   <div class="work rise d1">
     <div class="shot" data-cams='{"0":[720,450,1],"1":[230,450,1.4],"4":[720,450,1]}'>
       <div class="cam" style="height:900px">
@@ -216,20 +234,20 @@
     </div>
     <div class="rail">
       <p class="q">Delivery Fri 16 Jan · cutoff 10:00 Thu 15 Jan</p>
-      <p style="font-size:19px; margin-top:-12px">This walkthrough uses the pilot's illustrative 10:00 default. A 09:00 cutoff, before the close, would show the 07:30 run instead.</p>
+      <p style="font-size:19px; margin-top:-12px">10:00 is after morning energy gates, before the 15:30 auction. At 09:00: use the 07:30 run.</p>
       <ol class="steps">
-        <li data-step="1"><span>1</span><div><b>Pick your cutoff</b>Any hour on the day before delivery. The grid is your decision clock.</div></li>
-        <li data-step="2"><span>2</span><div><b>See the release rhythm</b>Blue dots mark the first hour after each new Elexon release.</div></li>
-        <li data-step="3"><span>3</span><div><b>The exact run, named</b>"Uses the 9:30 am release." Never a later one, never a blend.</div></li>
-        <li data-step="4"><span>4</span><div><b>Read the forecast</b>Magenta is the forecast your desk had, hour by hour.</div></li>
+        <li data-step="1"><span>1</span><div><b>Choose a cutoff</b>Day before delivery.</div></li>
+        <li data-step="2"><span>2</span><div><b>Blue dots: new releases</b>First selectable hour after publication.</div></li>
+        <li data-step="3"><span>3</span><div><b>One timestamped run</b>Latest release at or before cutoff.</div></li>
+        <li data-step="4"><span>4</span><div><b>Magenta: forecast</b>Hour by hour.</div></li>
       </ol>
     </div>
   </div>
-  <aside class="notes">~0:40. Zoom into the controls. 1: pick a cutoff. 2: blue dots show when Elexon released something new, so you can see which hours change the answer. 3: the release note names the exact forecast run in use. We never quietly swap in a later forecast. 4: zoom out, and the magenta line is that forecast for the delivery day.</aside>
+  <aside class="notes">Choose the delivery day and previous-day cutoff to match your auction. The illustrative 10:00 setting is too late for the morning gates but before the 15:30 EPEX gate. Blue dots mark newly available releases; the label names the selected run. The magenta line shows that forecast, with no later information mixed in.</aside>
 </section>
 
 <section class="slide sheet" data-part="Part 1 · Pilot walkthrough">
-  <div class="top"><h2 class="rise"><span class="qn">2</span>Where did it miss? Turn on hindsight.</h2><span class="part">2 · Daily view</span></div>
+  <div class="top"><h2 class="rise"><span class="qn">2</span>Compare forecast with actual output</h2><span class="part">2 · Daily view</span></div>
   <div class="work rise d1">
     <div class="shot" data-h="1415" data-cams='{"0":[720,450,1],"4":[888,1053,1.36]}'>
       <div class="cam" style="height:1415px">
@@ -244,50 +262,27 @@
           <rect class="ring" data-step="5" pathLength="1" x="384" y="851" width="1008" height="142" rx="10"/>
           <rect class="ring" data-step="5" pathLength="1" x="400" y="1090" width="976" height="172" rx="10"/>
         </svg>
-        <div class="call" data-step="1" data-hide="2" style="left:880px; top:300px">One switch adds what really happened</div>
-        <div class="call org" data-step="3" data-hide="4" style="left:930px; top:470px">Darker band = bigger miss. Here 2,000+ MW too high</div>
-        <div class="call" data-step="3" data-hide="4" style="left:640px; top:470px; background:var(--under-ink)">Green = too low</div>
+        <div class="call" data-step="1" data-hide="2" style="left:880px; top:300px">Show actuals</div>
+        <div class="call org" data-step="3" data-hide="4" style="left:930px; top:470px">2,000+ MW too high</div>
+        <div class="call" data-step="3" data-hide="4" style="left:640px; top:470px; background:var(--under-ink)">Blue = too low</div>
       </div>
     </div>
     <div class="rail">
       <p class="q">Same day, same 09:30 forecast</p>
       <ol class="steps">
-        <li data-step="1"><span>1</span><div><b>Show actuals & errors</b>Actuals are marked as hindsight: your desk couldn't see them at 10:00.</div></li>
-        <li data-step="2"><span>2</span><div><b>The gap appears</b>Every half-hour between forecast and actual is shaded.</div></li>
-        <li data-step="3"><span>3</span><div><b>Read the depth</b>Orange too high, green too low. Darker means a bigger miss, on one fixed scale.</div></li>
-        <li data-step="4"><span>4</span><div><b>Scored, not eyeballed</b>88.4% accurate; 27 half-hours too high, 21 too low; every half-hour charted.</div></li>
+        <li data-step="1"><span>1</span><div><b>Actuals are hindsight</b>Not known at decision time.</div></li>
+        <li data-step="2"><span>2</span><div><b>Shading shows the gap</b>Every half-hour.</div></li>
+        <li data-step="3"><span>3</span><div><b>Amber: high · blue: low</b>Stronger shade = bigger error. Fixed scale.</div></li>
+        <li data-step="4"><span>4</span><div><b>88.4% accuracy</b>27 half-hours high · 21 low.</div></li>
       </ol>
     </div>
   </div>
-  <aside class="notes">~0:45. 1: flip the switch. 2: watch the gap fill in. 3: colour says direction, depth says size: this evening ran 2,000+ MW high; midday ran slightly low. 4–5: scroll down, and the same day is scored: 88.4% accuracy, 27 half-hours too high and 21 too low, with every half-hour's error charted.</aside>
+  <aside class="notes">Turn on actuals to compare with what happened later. Amber means forecast too high; blue means too low; stronger shading means a bigger miss. This day scores 88.4% accuracy, with 27 half-hours too high and 21 too low.</aside>
 </section>
 
-<section class="slide sheet" data-part="Part 1 · Pilot walkthrough">
-  <div class="top"><h2 class="rise">Some days the forecast is badly wrong, and you see it instantly.</h2><span class="part">2 · Daily view</span></div>
-  <div class="work rise d1">
-    <div class="shot" data-cams='{"0":[720,450,1],"2":[1000,520,1.3]}'>
-      <div class="cam" style="height:900px">
-        <img src="shots/daily-28.webp" style="top:0" alt="Daily page for 28 January with a large overforecast">
-        <svg class="ov" width="1440" height="900" viewBox="0 0 1440 900">
-          <rect class="ring" data-step="1" pathLength="1" x="360" y="88" width="790" height="58" rx="10"/>
-          <path class="arrow" data-step="2" pathLength="1" d="M760 320 L760 560"/>
-          <path class="arrow" data-step="2" pathLength="1" d="M742 540 L760 562 L778 540"/>
-        </svg>
-        <div class="call org" data-step="2" style="left:800px; top:380px">≈11 GW forecast, under 6 GW delivered</div>
-      </div>
-    </div>
-    <div class="rail">
-      <p class="q">Wed 28 Jan · cutoff 10:00</p>
-      <div class="big reveal" data-step="1"><strong class="o">48 / 48</strong><span>half-hours forecast too high</span></div>
-      <div class="big reveal" data-step="2"><strong class="o"><span class="count" data-to="6.7" data-dec="1">6.7</span>%</strong><span>accuracy for the day</span></div>
-      <p class="reveal" data-step="2" style="font-size:20px">A desk trusting this forecast would have under-bought by about 5 GW, all day.</p>
-    </div>
-  </div>
-  <aside class="notes">~0:30. 28 January is the month's worst day. Every half-hour ran high, by roughly 5 GW on average. Spotting days like this, and how often they happen, is what the monthly view is for.</aside>
-</section>
 
 <section class="slide sheet" data-part="Part 1 · Pilot walkthrough">
-  <div class="top"><h2 class="rise"><span class="qn">3</span>How far can you trust it? January's verdict.</h2><span class="part">3 · Monthly view</span></div>
+  <div class="top"><h2 class="rise"><span class="qn">3</span>January: a consistent overforecast</h2><span class="part">3 · Monthly view</span></div>
   <div class="work rise d1">
     <div class="shot" data-h="758" style="aspect-ratio:1440/758" data-cams='{"0":[720,379,1],"1":[868,200,1.35],"3":[720,379,1]}'>
       <div class="cam" style="height:758px">
@@ -300,17 +295,16 @@
               </div>
     </div>
     <div class="rail" style="gap:26px">
-      <div class="big reveal" data-step="1"><strong class="o"><span class="count" data-to="84">84</span>%</strong><span>of half-hours forecast too high (1,256 of 1,488)</span></div>
-      <div class="big reveal" data-step="2"><strong class="o">+<span class="count" data-to="1840" data-sep="1">1,840</span> MW</strong><span>average overstatement, about 16% of actual output</span></div>
+      <div class="big reveal" data-step="1"><strong class="o"><span class="count" data-to="84">84</span>%</strong><span>of half-hours forecast too high</span></div>
+      <div class="big reveal" data-step="2"><strong class="o">+<span class="count" data-to="1840" data-sep="1">1,840</span> MW</strong><span>average error · 16% of actual output</span></div>
       <div class="big reveal" data-step="3"><strong class="m"><span class="count" data-to="81.6" data-dec="1">81.6</span>%</strong><span>month accuracy · 28 of 31 days ran high on average</span></div>
-      <p class="reveal" data-step="3" style="font-size:21px">In the day-by-day chart, the shaded gap sits <b>above</b> the actual line almost every day.</p>
     </div>
   </div>
-  <aside class="notes">~0:40. The month answers the trust question. At a 10:00 cutoff, the forecast was too high on 84% of half-hours, by 1,840 MW on average, roughly 16% of what was actually generated. It's not random noise: it leans one way. Accuracy is 81.6%, weighted by volume.</aside>
+  <aside class="notes">At the 10:00 cutoff, 84% of January half-hours were overforecast. Average signed error was +1,840 MW; volume-weighted accuracy was 81.6%. The key finding is a consistent upward bias in this month.</aside>
 </section>
 
 <section class="slide sheet" data-part="Part 1 · Pilot walkthrough">
-  <div class="top"><h2 class="rise">Which days go wrong? The whole month at a glance.</h2><span class="part">3 · Monthly view</span></div>
+  <div class="top"><h2 class="rise">Best and worst days</h2><span class="part">3 · Monthly view</span></div>
   <div class="work rise d1" style="align-items:center">
     <div class="fig"><div class="fig-in">
       <img src="shots/monthly-cal.webp" alt="Calendar of January shaded by accuracy">
@@ -322,50 +316,9 @@
     <div class="rail">
       <div class="big reveal" data-step="1"><strong class="o">28 Jan</strong><span>worst day · 6.7% accuracy</span></div>
       <div class="big reveal" data-step="2"><strong class="bl">20 Jan</strong><span>best day · 93.5% accuracy</span></div>
-      <p class="reveal" data-step="2" style="font-size:21px">Each day is shaded on the same depth scale and opens its daily view in one click.</p>
     </div>
   </div>
-  <aside class="notes">~0:20. One glance at the month: darker means a bigger miss. The worst days stand out, and each links straight to its daily view.</aside>
-</section>
-
-<section class="slide sheet" data-part="Part 1 · Pilot walkthrough">
-  <div class="top"><h2 class="rise">Which hours go wrong? Early mornings.</h2><span class="part">3 · Monthly view</span></div>
-  <div class="work rise d1" style="align-items:center">
-    <div class="fig"><div class="fig-in">
-      <img src="shots/monthly-tod.webp" alt="Average error by time of day">
-      <svg viewBox="0 0 1040 326" preserveAspectRatio="none">
-        <rect class="ring" data-step="1" pathLength="1" x="289" y="99" width="29" height="186" rx="5"/>
-        <rect class="ring blue" data-step="2" pathLength="1" x="677" y="178" width="29" height="107" rx="5"/>
-      </svg>
-    </div></div>
-    <div class="rail">
-      <div class="big reveal" data-step="1"><strong class="o">~2.4 GW</strong><span>too high on average at 05:30 (magenta ring)</span></div>
-      <div class="big reveal" data-step="2"><strong class="bl">~1.3 GW</strong><span>at 15:30, the closest slot (blue ring)</span></div>
-      <p class="reveal" data-step="2" style="font-size:21px">Be most sceptical of the forecast for overnight and early-morning blocks.</p>
-    </div>
-  </div>
-  <aside class="notes">~0:20. Averaged by time of day across all 31 days, every slot runs high, but the overnight and early-morning blocks are the most optimistic.</aside>
-</section>
-
-<section class="slide sheet" data-part="Part 1 · Pilot walkthrough">
-  <div class="top"><h2 class="rise">Would deciding later help? Barely.</h2><span class="part">3 · Monthly view</span></div>
-  <div class="work rise d1" style="align-items:center">
-    <div class="fig"><div class="fig-in">
-      <img src="shots/monthly-cut.webp" alt="Month accuracy for every cutoff">
-      <svg viewBox="0 0 1040 330" preserveAspectRatio="none">
-        <circle class="ring" data-step="1" pathLength="1" cx="445" cy="216" r="20"/>
-        <circle class="ring blue" data-step="2" pathLength="1" cx="1011" cy="168" r="20"/>
-        <path class="arrow" data-step="2" pathLength="1" d="M470 200 C 640 120, 860 110, 988 156"/>
-      </svg>
-      <div class="call mag" data-step="1" style="left:30%; top:72%">09:00, before the close · 81.5%</div>
-      <div class="call" data-step="2" style="left:76%; top:72%; background:var(--blue)">23:00 · 83.2%</div>
-    </div></div>
-    <div class="rail">
-      <div class="big reveal" data-step="2"><strong class="bl">+1.7</strong><span>accuracy points for waiting 14 more hours, until 23:00</span></div>
-      <p class="reveal" data-step="3"><b>So deciding before the auction closes costs almost nothing.</b> The forecast's lean, not its timing, is what to plan around.</p>
-    </div>
-  </div>
-  <aside class="notes">~0:25. Each point reruns the whole month as if you decided at that hour. A 09:00 decision, before the close, scores 81.5%; waiting until 23:00 only reaches 83.2%. Good news for your current process: the early decision isn't the problem; the forecast's consistent lean is.</aside>
+  <aside class="notes">The calendar makes weak days easy to spot and opens each daily view. 28 January was worst at 6.7%; 20 January was best at 93.5%. That completes the walkthrough; next is how the app is built.</aside>
 </section>
 
 
@@ -374,16 +327,14 @@
 
 <section class="slide field magenta" data-part="Part 2 · Technical review">
   <div class="wordmark rise">dahptd</div>
-  <h1 class="rise d1" style="margin-top:110px; max-width:1100px">How it's built, and why.</h1>
-  <ol class="rise d2" style="margin-top:56px; display:grid; grid-template-columns:repeat(3,auto); gap:18px 64px; font-size:30px; padding-left:28px; width:fit-content">
-    <li>Architecture</li><li>Data snapshot</li><li>The no-hindsight rule</li><li>Alignment &amp; metrics</li><li>Codebase map</li><li>Practices &amp; trade-offs</li>
-  </ol>
+  <h1 class="rise d1" style="margin-top:110px; max-width:1100px">Technical review</h1>
+  <p class="rise d2" style="margin-top:56px; color:var(--ink); font-size:30px">Architecture · Data · Method · Tests</p>
   <span class="chip light rise d3" style="margin-top:auto; width:fit-content">Part 2 · Technical review</span>
-  <aside class="notes">~0:10. Switch audience: same product, now for review and handover.</aside>
+  <aside class="notes">Now switch from the findings to how the app works: request routing, React rendering and API calls, the data snapshot and caches, then code and checks.</aside>
 </section>
 
 <section class="slide sheet" data-part="Part 2 · Technical review">
-  <div class="top"><h2 class="rise">Two services, one bundled data snapshot, no database.</h2><span class="part">Architecture</span></div>
+  <div class="top"><h2 class="rise">Two services. One data snapshot.</h2><span class="part">Architecture</span></div>
   <svg viewBox="0 0 1456 570" width="1456" height="570" class="rise d1" style="margin-top:40px" aria-label="Request flow diagram">
     <defs><marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#1d2a33"/></marker></defs>
     <g font-size="20">
@@ -414,89 +365,76 @@
       <path class="arrow" style="stroke:#1d2a33" data-step="2" pathLength="1" d="M972 425 L1066 425"/>
     </g>
     <circle r="9" fill="#c8177b" class="reveal" data-step="2"><animateMotion dur="2.6s" repeatCount="indefinite" path="M110 275 L420 275 C 590 300, 590 425, 640 425 L 1066 425"/></circle>
-    <text x="0" y="552" font-size="24" fill="#4a5d6b" class="reveal" data-step="3">Local: <tspan font-weight="700" fill="#1d2a33">docker compose up</tspan> runs both with a health-checked start; Next's dev rewrite proxies /api to BACKEND_URL.</text>
+    <text x="0" y="552" font-size="24" fill="#4a5d6b" class="reveal" data-step="3">Local: <tspan font-weight="700" fill="#1d2a33">docker compose up</tspan> · No database or request-time downloads.</text>
   </svg>
-  <aside class="notes">~0:40. Step 1: Vercel routes pages to Next.js. Step 2: /api goes to FastAPI, which reads the bundled snapshot. No database and no download at request time, so responses are pure functions of date and cutoff: deterministic and easy to cache. Step 3: locally, Docker Compose mirrors it.</aside>
+  <aside class="notes">The browser loads the Next.js interface, then requests JSON from the same site's /api paths. On Vercel, routing sends /api directly to FastAPI, not through a Next.js API handler. Locally, a Next.js rewrite proxies to BACKEND_URL. FastAPI reads the bundled snapshot; there is no database or request-time download.</aside>
 </section>
 
 <section class="slide sheet" data-part="Part 2 · Technical review">
-  <div class="top"><h2 class="rise">A reproducible snapshot, not a live dependency.</h2><span class="part">Data</span></div>
+  <div class="top"><h2 class="rise">Server shell. Client-side data.</h2><span class="part">Rendering &amp; API</span></div>
+  <div class="rise d1" style="display:grid; grid-template-columns:1fr 1fr; gap:44px">
+    <div class="box" style="display:grid; gap:22px; align-content:start">
+      <h3>React rendering</h3>
+      <p><b>Server Components:</b> layout and route wrappers.</p>
+      <p><b>Client Components:</b> dashboard state, controls and charts.</p>
+      <p><b>Suspense:</b> boundary for <code>useSearchParams()</code>, not API loading.</p>
+      <p>No server-side forecast fetch or Server Actions.</p>
+    </div>
+    <div class="box" style="display:grid; gap:22px; align-content:start">
+      <h3>Browser request flow</h3>
+      <p>URL date / cutoff → <code>useEffect</code> → <code>fetch</code> → JSON → React state.</p>
+      <p style="font-size:19px; overflow-wrap:anywhere"><code>/api/forecast?delivery_date=2026-01-16&amp;cutoff=10:00</code><br><code>/api/monthly?cutoff=10:00</code></p>
+      <p>15-second timeout · abort superseded requests · retry on error.</p>
+      <p>Previous result stays visible while the next loads.</p>
+    </div>
+  </div>
+  <p class="rise d2" style="margin-top:32px; font-size:21px">Same-origin requests: Vercel routes to FastAPI in production; Next.js proxies locally.</p>
+  <aside class="notes">Yes, the layout and page wrappers are React Server Components, but they do not fetch forecast data. Interactive dashboards are Client Components. Suspense supports their useSearchParams hook; loading and errors for API calls use explicit state. Changing date or cutoff updates the URL and triggers browser fetch. Requests time out after 15 seconds and abort on cleanup; previous results stay visible. Retry makes a new request. No SWR, React Query, or Server Actions are used.</aside>
+</section>
+
+<section class="slide sheet" data-part="Part 2 · Technical review">
+  <div class="top"><h2 class="rise">Bundled data, reproducible results</h2><span class="part">Data</span></div>
   <div class="rise d1" style="display:grid; grid-template-columns:1fr 70px 1.25fr 70px 1fr; align-items:stretch">
     <div class="box"><h3>Elexon BMRS API</h3><p style="margin-top:10px">WINDFOR, every published run.<br>FUELHH, fuelType WIND.</p><span class="tag" style="margin-top:14px">stream endpoints</span></div>
     <svg viewBox="0 0 70 60" style="align-self:center"><path class="arrow" data-step="1" pathLength="1" d="M8 30 L58 30 M46 18 L60 30 L46 42" style="stroke:var(--ink)"/></svg>
     <div class="box" style="border-color:var(--magenta)"><h3 class="m">scripts/download_data.py</h3>
-      <ul style="margin-top:10px; padding-left:22px; display:grid; gap:4px"><li style="font-size:19px">Daily requests, 2 workers, retries</li><li style="font-size:19px">Removes duplicate records</li><li style="font-size:19px">Checks full half-hourly coverage first</li><li style="font-size:19px">Writes a manifest: URLs, counts, SHA-256</li></ul></div>
+      <ul style="margin-top:10px; padding-left:22px; display:grid; gap:4px"><li style="font-size:19px">Download + deduplicate</li><li style="font-size:19px">Validate coverage</li><li style="font-size:19px">Record sources + SHA-256</li></ul></div>
     <svg viewBox="0 0 70 60" style="align-self:center"><path class="arrow" data-step="2" pathLength="1" d="M8 30 L58 30 M46 18 L60 30 L46 42" style="stroke:var(--ink)"/></svg>
-    <div class="box" style="background:var(--ink); border-color:var(--ink)"><h3 style="color:#fff">backend/data/elexon/</h3><p style="margin-top:10px; color:#c9d8e2">Committed, read-only, bundled into the Vercel function and Docker image.</p></div>
+    <div class="box" style="background:var(--ink); border-color:var(--ink)"><h3 style="color:#fff">backend/data/elexon/</h3><p style="margin-top:10px; color:#c9d8e2">Read-only snapshot, shipped with the app.</p></div>
   </div>
   <div class="reveal" data-step="2" style="display:grid; grid-template-columns:repeat(3,1fr); gap:28px; margin-top:44px">
     <div class="big"><strong class="m"><span class="count" data-to="18272" data-sep="1">18,272</span></strong><span>hourly forecast records, every release 31 Dec – 31 Jan</span></div>
     <div class="big"><strong class="bl"><span class="count" data-to="1536" data-sep="1">1,536</span></strong><span>half-hourly actuals, 1 Jan – 1 Feb, complete</span></div>
     <div class="big"><strong>~110 KB</strong><span>gzipped; refresh = run, commit, redeploy</span></div>
   </div>
-  <aside class="notes">~0:35. Why a snapshot: the client and reviewers get identical numbers, CI is hermetic, and an Elexon outage can't break a demo. Boundary days are included so 1 Jan delivery and 31 Jan decisions both work. Trade-off: not live, which is the obvious phase 2 item. Actuals are an October snapshot, not an as-of archive; documented.</aside>
+  <aside class="notes">The downloader collects Elexon forecasts and actuals, removes duplicates, checks coverage, and records source URLs and checksums. Bundling the snapshot makes results reproducible and independent of live API availability. Actuals reflect the downloaded snapshot, not what was known at decision time.</aside>
 </section>
 
+
 <section class="slide sheet" data-part="Part 2 · Technical review">
-  <div class="top"><h2 class="rise">The core rule: one release, the latest at or before the cutoff.</h2><span class="part">analysis.py</span></div>
+  <div class="top"><h2 class="rise">Read-only data. Per-process caches.</h2><span class="part">Backend lifecycle</span></div>
   <div class="rise d1" style="display:grid; grid-template-columns:1fr 1fr; gap:44px">
-<pre><span class="k">def</span> latest_publication(publications, decision_at):
-    <span class="s">"""The single most recent publication
-    at or before the cutoff, if any."""</span>
-    times = sorted(publications)
-    index = bisect_right(times, decision_at)
-    <span class="k">return</span> times[index - 1] <span class="k">if</span> index <span class="k">else</span> None
-
-<span class="c"># cutoff = delivery day − 1, Europe/London</span>
-<span class="c"># hours the run lacks stay as gaps</span></pre>
-    <div style="display:grid; gap:18px; align-content:start">
-      <svg id="rule-anim" viewBox="0 0 640 230" width="700" height="252" aria-label="Animated cutoff choosing the latest release">
-        <line x1="20" y1="120" x2="620" y2="120" stroke="#c5dcea" stroke-width="8" stroke-linecap="round"/>
-        <g id="rule-releases"></g>
-        <line id="rule-cut" x1="20" y1="50" x2="20" y2="140" stroke="#c8177b" stroke-width="4" stroke-dasharray="8 6"/>
-        <text id="rule-cut-label" x="20" y="40" font-size="20" font-weight="800" fill="#c8177b" text-anchor="middle">cutoff 00:00</text>
-        <text id="rule-pick" x="20" y="222" font-size="20" font-weight="700" fill="#0067a5">uses: previous evening's 22:30</text>
-        <g font-size="15" fill="#4a5d6b" text-anchor="middle"><text x="20" y="160">00</text><text x="170" y="160">06</text><text x="320" y="160">12</text><text x="470" y="160">18</text><text x="620" y="160">24</text></g>
-      </svg>
-      <p>As the cutoff sweeps the day, the chosen run only changes when a new release lands. <b>Mixing runs would create a forecast nobody ever saw</b>, so we never do.</p>
+    <div class="box" style="display:grid; gap:22px; align-content:start">
+      <h3>Load and calculate</h3>
+      <p>FastAPI validates the date range and cutoff format.</p>
+      <p>First analysis access decompresses bundled JSON into Python dictionaries.</p>
+      <p>Forecast index: publication → target hour → MW.<br>Actuals index: half-hour timestamp → MW.</p>
+      <p>Select one forecast run, align intervals, calculate scores, return JSON.</p>
+    </div>
+    <div class="box" style="display:grid; gap:22px; align-content:start">
+      <h3><code>functools.lru_cache</code></h3>
+      <p>Dataset + manifest: one cached value each.</p>
+      <p>Daily responses: up to 64 date/cutoff pairs.<br>Monthly responses: up to 32 cutoffs.</p>
+      <p>24-cutoff monthly comparison: one cached result.</p>
+      <p>No database, shared cache, or live ingestion.</p>
     </div>
   </div>
-  <div class="reveal" data-step="1" style="margin-top:36px; display:grid; gap:12px">
-    <p style="font-size:21px; font-weight:700; color:var(--ink)">Pinned by tests in backend/tests/test_analysis.py</p>
-    <div style="display:flex; flex-wrap:wrap; gap:10px"><span class="tag">uses_single_latest_publication_at_or_before_cutoff</span><span class="tag">no_publication_before_cutoff</span><span class="tag">cutoff_selects_different_publications</span><span class="tag">hourly_forecast_is_compared_with_each_half_hour</span></div>
-  </div>
-  <aside class="notes">~0:40. This invariant is what the product rests on, and it's tested directly. The animation is the rule running: the cutoff sweeps, and the selected run jumps only at release times. Cutoffs of 00:00–02:00 use the previous evening's 22:30 run, which covers only 22 hours; those show as gaps, not invented data.</aside>
+  <p class="rise d2" style="margin-top:32px; font-size:21px">Caches are disposable: cold starts / new workers rebuild them. Refresh the snapshot and redeploy to update data.</p>
+  <aside class="notes">FastAPI validates inputs before calling analysis.py. The first analysis request loads compressed files into dictionaries indexed by publication and target time, and by actual half-hour. Python LRU caches reuse the loaded data and calculated responses: 64 daily keys, 32 monthly keys, and one all-cutoff comparison. These caches belong to each Python process, not the whole deployment; a cold start rebuilds them. The committed snapshot is the source of truth. Updating data means rerunning the downloader and shipping a new build, not writing to a live database.</aside>
 </section>
 
 <section class="slide sheet" data-part="Part 2 · Technical review">
-  <div class="top"><h2 class="rise">Hourly forecasts, half-hourly actuals. Nothing interpolated, nothing zero-filled.</h2><span class="part">Alignment &amp; metrics</span></div>
-  <div class="rise d1" style="display:grid; grid-template-columns:680px 1fr; gap:52px; margin-top:20px">
-    <svg viewBox="0 0 600 380" width="680" height="430" aria-label="One hourly forecast compared with two half-hours">
-      <line x1="40" y1="330" x2="580" y2="330" stroke="#1d2a33" stroke-width="2"/>
-      <rect x="80" y="110" width="440" height="10" rx="5" fill="#c8177b"/>
-      <text x="300" y="96" text-anchor="middle" font-size="20" font-weight="800" fill="#c8177b">Forecast 14:00–15:00 · 9,000 MW</text>
-      <rect class="reveal" data-step="1" x="90" y="160" width="200" height="170" fill="#0080c6" opacity=".85"/>
-      <rect class="reveal" data-step="1" x="310" y="200" width="200" height="130" fill="#0080c6" opacity=".85"/>
-      <text class="reveal" data-step="1" x="190" y="360" text-anchor="middle" font-size="18" fill="#4a5d6b">14:00 actual 8,400</text>
-      <text class="reveal" data-step="1" x="410" y="360" text-anchor="middle" font-size="18" fill="#4a5d6b">14:30 actual 7,800</text>
-      <g class="reveal" data-step="2"><line x1="190" y1="122" x2="190" y2="158" stroke="#d9660f" stroke-width="5"/><text x="200" y="146" font-size="18" font-weight="800" fill="#a8490a">+600</text>
-      <line x1="410" y1="122" x2="410" y2="198" stroke="#d9660f" stroke-width="5"/><text x="420" y="166" font-size="18" font-weight="800" fill="#a8490a">+1,200</text></g>
-    </svg>
-    <div style="display:grid; gap:18px; align-content:start">
-      <p class="reveal" data-step="1">Each hourly forecast is compared <b>separately with both half-hours</b> it covers, so variation inside the hour counts as error.</p>
-      <div class="box reveal" data-step="2" style="display:grid; gap:8px">
-        <p><b class="o">Error</b> = forecast − actual (+ means too high)</p>
-        <p><b>MAE</b> = mean |error| · <b>RMSE</b> pooled before the root</p>
-        <p><b class="m">Accuracy</b> = 100% − WAPE = 100% − Σ|e| ÷ Σ actual</p>
-      </div>
-      <p class="reveal" data-step="3" style="font-size:20px">Missing values stay <b>null</b>; scores report matched ÷ expected half-hours. Month scores pool all 1,488 half-hours rather than averaging daily figures.</p>
-    </div>
-  </div>
-  <aside class="notes">~0:35. WAPE over MAPE: it weights by volume and doesn't blow up on low-output intervals. Too-high and too-low counts are shown separately because an average signed error can cancel out. docs/methodology.md carries the primary sources and the open questions, such as whether WINDFOR values are interval means.</aside>
-</section>
-
-<section class="slide sheet" data-part="Part 2 · Technical review">
-  <div class="top"><h2 class="rise">Small, layered, easy to hand over.</h2><span class="part">Codebase</span></div>
+  <div class="top"><h2 class="rise">Where the logic lives</h2><span class="part">Codebase</span></div>
   <div class="rise d1" style="display:grid; grid-template-columns:1fr 1fr; gap:56px">
     <div class="tree">
       <div><b>backend/</b></div>
@@ -505,7 +443,6 @@
       <div>&nbsp; scripts/download_data.py <i>snapshot refresh</i></div>
       <div>&nbsp; data/elexon/ <i>gz data + manifest</i></div>
       <div>&nbsp; tests/ <i>pytest</i></div>
-      <div style="margin-top:14px"><b>docs/methodology.md</b> <i>assumptions + sources</i></div>
     </div>
     <div class="tree">
       <div><b>frontend/app/</b></div>
@@ -518,29 +455,35 @@
       <div style="margin-top:14px"><b>frontend/tests/</b> <i>pure-logic tests</i></div>
     </div>
   </div>
-  <p class="reveal" data-step="1" style="margin-top:36px"><b>Reading order:</b> analysis.py top to bottom (≈240 lines) → main.py → forecast-data.ts → forecast-page.tsx. Business rules live in one backend module; UI logic sits in plain TS modules that test without React.</p>
-  <aside class="notes">~0:30. Point at the reading order. Mention the design system: every colour is a token in globals.css with light and dark sets, so the theme switch is one class on html.</aside>
+  <p class="reveal" data-step="1" style="margin-top:36px"><b>Start here:</b> analysis.py → main.py → forecast-data.ts → forecast-page.tsx</p>
+  <aside class="notes">Start with analysis.py for forecast selection and scoring, then main.py for the API. The core rule is one release at or before cutoff, with missing hours left as gaps. Follow forecast-data.ts and forecast-page.tsx into the interface.</aside>
 </section>
 
 <section class="slide sheet" data-part="Part 2 · Technical review">
-  <div class="top"><h2 class="rise">Boring on purpose: pinned, tested, checked on every push.</h2><span class="part">Practices</span></div>
+  <div class="top"><h2 class="rise">Checks and limitations</h2><span class="part">Practices</span></div>
   <div class="rise d1" style="display:grid; grid-template-columns:1fr 520px; gap:44px; align-items:start">
     <div style="display:grid; gap:26px">
       <p style="font-size:22px; font-weight:700; color:var(--blue)">GitHub Actions, every push and pull request</p>
-      <div class="lane"><b>Backend</b><span class="ck"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="#3f9a49"/><path d="M7 12.5l3.2 3.2L17 9" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>uv sync</span><span class="ck"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="#3f9a49"/><path d="M7 12.5l3.2 3.2L17 9" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>ruff check</span><span class="ck"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="#3f9a49"/><path d="M7 12.5l3.2 3.2L17 9" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>ruff format</span><span class="ck"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="#3f9a49"/><path d="M7 12.5l3.2 3.2L17 9" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>pytest · 14</span></div>
-      <div class="lane"><b>Frontend</b><span class="ck"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="#3f9a49"/><path d="M7 12.5l3.2 3.2L17 9" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>eslint</span><span class="ck"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="#3f9a49"/><path d="M7 12.5l3.2 3.2L17 9" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>bun test · 15</span><span class="ck"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="#3f9a49"/><path d="M7 12.5l3.2 3.2L17 9" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>typecheck</span><span class="ck"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="#3f9a49"/><path d="M7 12.5l3.2 3.2L17 9" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>next build</span></div>
-      <p style="margin-top:8px">Pinned <b>Bun 1.4.3</b> and <b>uv 0.13.4</b> with frozen lockfiles; Docker for both services; checksummed data. Data loads once per instance and views are memoised, so a 10 s function limit is plenty.</p>
+      <div class="lane"><b>Backend</b><span class="ck"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11"/><path d="M7 12.5l3.2 3.2L17 9" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>uv sync</span><span class="ck"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11"/><path d="M7 12.5l3.2 3.2L17 9" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>ruff check</span><span class="ck"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11"/><path d="M7 12.5l3.2 3.2L17 9" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>ruff format</span><span class="ck"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11"/><path d="M7 12.5l3.2 3.2L17 9" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>pytest · 14</span></div>
+      <div class="lane"><b>Frontend</b><span class="ck"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11"/><path d="M7 12.5l3.2 3.2L17 9" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>eslint</span><span class="ck"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11"/><path d="M7 12.5l3.2 3.2L17 9" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>bun test · 24</span><span class="ck"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11"/><path d="M7 12.5l3.2 3.2L17 9" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>typecheck</span><span class="ck"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11"/><path d="M7 12.5l3.2 3.2L17 9" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>next build</span></div>
+      <p style="margin-top:8px">Pinned tools · frozen lockfiles · Docker<br>Checksummed data · per-instance cache</p>
     </div>
-    <figure style="display:grid; gap:10px"><div class="shot" style="aspect-ratio:16/10"><img src="shots/daily-dark.webp" alt="Updated daily page in dark mode, with magenta header and selected cutoff" style="width:100%; height:100%; object-fit:cover; display:block"></div><figcaption style="font-size:18px; color:var(--muted)">Orange controls in light mode, magenta in dark; the switch remembers your choice.</figcaption></figure>
+    <figure style="display:grid; gap:10px"><div class="shot" style="aspect-ratio:16/10"><img src="shots/daily-dark.webp" alt="Updated daily page in dark mode, with magenta header and selected cutoff" style="width:100%; height:100%; object-fit:cover; display:block"></div><figcaption style="font-size:18px; color:var(--muted)">Light and dark themes</figcaption></figure>
   </div>
   <div class="reveal" data-step="1" style="margin-top:34px; border-top:2px solid var(--ink); padding-top:22px">
-    <p><b>Known trade-offs → next steps:</b> snapshot isn't live (scheduled ingestion + Blob storage) · WINDFOR interval semantics need publisher confirmation · per-instance cache only · AI assistants helped build this, with every rule covered by tests.</p>
+    <p><b>Limitations:</b> not live · one month only · WINDFOR interval semantics need publisher confirmation.</p>
   </div>
-  <aside class="notes">~0:40. Name the trade-offs before the reviewer does. Total Part 2: about 4.5 minutes.</aside>
+  <aside class="notes">CI checks backend linting and tests, plus frontend linting, tests, types, and build. Tools and data are pinned for reproducibility. Limits: this is not live, covers one month, and the forecast interval interpretation still needs publisher confirmation. The findings describe January, not guaranteed future performance.</aside>
 </section>
 
 
-
+<section class="slide field orange" data-part="Close">
+  <div class="wordmark rise">dahptd</div>
+  <h1 class="rise d1" style="margin-top:150px">Thank you</h1>
+  <p class="rise d2" style="margin-top:30px; color:var(--ink); font-size:32px; font-weight:700"><a href="https://dahptd.vercel.app" style="color:inherit">dahptd.vercel.app</a></p>
+  <p class="rise d2" style="margin-top:30px; color:var(--ink); font-size:26px; font-weight:600">github.com/anandrajaram21/dahptd</p>
+  <aside class="notes">Thank you for your time. Try the app at dahptd.vercel.app. The pilot makes the available forecast traceable and its historical errors visible. The repository contains the code, tests, and startup instructions.</aside>
+</section>
 </div>
 
 <div id="progress"></div>
@@ -616,32 +559,6 @@ const next = () => step < maxStep(slides[current]) ? go(current, step + 1) : cur
 const prev = () => step > 0 ? go(current, step - 1) : current > 0 && go(current - 1, maxStep(slides[current - 1]));
 
 /* The no-hindsight rule, running: a cutoff sweeps the day and picks the latest release at or before it. */
-(function ruleAnimation() {
-  const releases = ["02:30", "04:30", "07:30", "09:30", "11:30", "15:30", "18:30", "22:30"];
-  const x = (h) => 20 + (h / 24) * 600;
-  const hours = (t) => { const [h, m] = t.split(":").map(Number); return h + m / 60; };
-  const group = document.getElementById("rule-releases");
-  const dots = releases.map((r) => {
-    const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-    c.setAttribute("cx", x(hours(r))); c.setAttribute("cy", 120); c.setAttribute("r", 11);
-    c.setAttribute("fill", "#fff"); c.setAttribute("stroke", "#0067a5"); c.setAttribute("stroke-width", 4);
-    group.appendChild(c); return c;
-  });
-  const cut = document.getElementById("rule-cut"), label = document.getElementById("rule-cut-label"), pick = document.getElementById("rule-pick");
-  let t0 = performance.now();
-  function frame(t) {
-    const h = reduce ? 10 : (((t - t0) / 9000) * 24) % 24;
-    const snapped = Math.floor(h);
-    cut.setAttribute("x1", x(h)); cut.setAttribute("x2", x(h));
-    label.setAttribute("x", Math.min(560, Math.max(70, x(h))));
-    label.textContent = `cutoff ${String(snapped).padStart(2, "0")}:${String(Math.floor((h % 1) * 60)).padStart(2, "0")}`;
-    const idx = releases.map(hours).filter((r) => r <= h).length - 1;
-    dots.forEach((d, i) => { d.setAttribute("fill", i === idx ? "#0067a5" : "#fff"); d.setAttribute("r", i === idx ? 14 : 11); });
-    pick.textContent = idx < 0 ? "uses: previous evening's 22:30 run" : `uses: the ${releases[idx]} run`;
-    if (!reduce) requestAnimationFrame(frame);
-  }
-  requestAnimationFrame(frame);
-})();
 
 /* Presenter notes in a second window. Built with DOM calls, not markup strings, so dev servers
    that inject scripts before the closing body tag can't break this file. */
