@@ -1,5 +1,4 @@
 import { InfoIcon } from "lucide-react";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export type ReleaseInfo = {
   // Clock time of the forecast in use, e.g. "15:30"; null if none yet.
@@ -35,19 +34,24 @@ export function ReleaseNotice({
 }: ReleaseInfo) {
   const shared = release && sameFrom && sameTo && sameFrom !== sameTo;
   return (
-    <Alert className="border-[#3987e5]/40 bg-[#3987e5]/10">
-      <InfoIcon />
-      <AlertTitle>
-        {release
-          ? `Uses the ${release} forecast`
-          : "No forecast published by this cutoff"}
-        {shared && ` · ${sameFrom}–${sameTo} all give identical results`}
-      </AlertTitle>
-      <AlertDescription>
+    <div
+      role="status"
+      className="grid gap-1.5 rounded-[var(--radius)] border-[1.5px] border-grid-ink/50 bg-card px-3.5 py-3 text-sm"
+    >
+      <p className="flex items-center gap-2 font-bold">
+        <InfoIcon aria-hidden="true" className="size-4 shrink-0 text-grid-ink" />
+        {release ? `Uses the ${release} release` : "No forecast published yet"}
+      </p>
+      {shared && (
+        <p className="font-medium">
+          Cutoffs {sameFrom}–{sameTo} all give identical results.
+        </p>
+      )}
+      <p className="text-[0.8rem] leading-snug text-muted-foreground">
         Elexon publishes {schedule.length} times a day ({schedule.join(", ")}{" "}
-        GMT), not every hour. Any cutoff between two releases picks the same
-        forecast, so nearby cutoffs often match.
-      </AlertDescription>
-    </Alert>
+        GMT), not every hour. Blue-marked hours are the first cutoff after each
+        release.
+      </p>
+    </div>
   );
 }
