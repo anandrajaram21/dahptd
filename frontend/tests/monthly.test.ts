@@ -9,7 +9,7 @@ import {
   share,
   type DaySummary,
   type MonthlyData,
-} from "../app/monthly/monthly-data";
+} from "../lib/monthly";
 
 const day = (delivery_date: string, accuracy: number | null) =>
   ({ delivery_date, accuracy }) as DaySummary;

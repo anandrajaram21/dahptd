@@ -1,4 +1,5 @@
-import { sameRun, type ReleaseInfo } from "./release-notice";
+import { DEFAULT_CUTOFF, sameRun, type ReleaseInfo } from "./cutoffs";
+import { timeLabel } from "./format";
 
 export type Metrics = {
   mae: number | null;
@@ -43,11 +44,6 @@ export type Settings = {
 export const FIRST_DATE = "2026-01-01";
 export const LAST_DATE = "2026-02-01";
 export const DEFAULT_DATE = "2026-01-16";
-export const DEFAULT_CUTOFF = "10:00";
-export const cutoffs = Array.from(
-  { length: 24 },
-  (_, hour) => `${String(hour).padStart(2, "0")}:00`,
-);
 
 const validDate = (value: string) =>
   /^\d{4}-\d{2}-\d{2}$/.test(value) &&
@@ -87,40 +83,6 @@ export const fromLocalDate = (date: Date) =>
     String(date.getMonth() + 1).padStart(2, "0"),
     String(date.getDate()).padStart(2, "0"),
   ].join("-");
-
-const formatter = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 0 });
-export const number = (value: number | null) =>
-  value === null ? "—" : formatter.format(value);
-export const signed = (value: number) =>
-  `${value > 0 ? "+" : value < 0 ? "−" : ""}${formatter.format(Math.abs(value))}`;
-
-export const dayLabel = (value: string, weekday = true) =>
-  new Date(`${value.slice(0, 10)}T00:00:00Z`).toLocaleDateString("en-GB", {
-    ...(weekday && { weekday: "long" }),
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-    timeZone: "UTC",
-  });
-export const shortDayLabel = (value: string) =>
-  new Date(`${value.slice(0, 10)}T00:00:00Z`).toLocaleDateString("en-GB", {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-    timeZone: "UTC",
-  });
-export const timeLabel = (value: string | number) =>
-  new Date(value).toLocaleTimeString("en-GB", {
-    hour: "2-digit",
-    minute: "2-digit",
-    timeZone: "Europe/London",
-  });
-export const publicationLabel = (value: string) =>
-  `${shortDayLabel(value)}, ${timeLabel(value)}`;
-
-const MINUTE = 60_000;
-export const intervalLabel = (start: string, minutes: number) =>
-  `${timeLabel(start)}–${timeLabel(new Date(start).getTime() + minutes * MINUTE)}`;
 
 export function errorDirection(error: number | null) {
   if (error === null) return null;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   CalendarIcon,
@@ -18,86 +18,45 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { ErrorChart, ForecastChart, chartConfig } from "./forecast-chart";
-import { ReleaseNotice } from "./release-notice";
-import {
-  CutoffGrid,
-  DepthKey,
-  Figure,
-  LegendKey,
-  NoteRef,
-  NotesPanel,
-  PanelGroup,
-  Sheet,
-  StatStrip,
-  noteOpener,
-} from "./sheet";
-import { SiteHeader } from "./site-header";
+import { CutoffGrid } from "@/components/cutoff-grid";
+import { DepthKey, LegendKey } from "@/components/legend";
+import { NoteRef, NotesPanel, noteOpener } from "@/components/notes";
+import { ReleaseNotice } from "@/components/release-notice";
+import { Figure, PanelGroup, Sheet, StatStrip } from "@/components/sheet";
+import { SiteHeader } from "@/components/site-header";
+import { chartConfig } from "@/components/chart-theme";
+import { useApi } from "@/hooks/use-api";
+import { cutoffs } from "@/lib/cutoffs";
 import {
   FIRST_DATE,
   LAST_DATE,
-  cutoffs,
   dailyReleaseInfo,
-  dayLabel,
   fromLocalDate,
-  number,
-  publicationLabel,
   readSettings,
   settingsQuery,
   shiftDate,
-  shortDayLabel,
   toLocalDate,
   type ForecastData,
   type Metrics,
   type Settings,
-} from "./forecast-data";
+} from "@/lib/daily";
+import {
+  dayLabel,
+  number,
+  publicationLabel,
+  shortDayLabel,
+} from "@/lib/format";
+import { ErrorChart, ForecastChart } from "./forecast-chart";
 
-export default function ForecastPage() {
+export default function DailyPage() {
   const settings = readSettings(useSearchParams());
   const { date, cutoff, actuals } = settings;
   const [notesOpen, setNotesOpen] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
-  const [retry, setRetry] = useState(0);
-  const [result, setResult] = useState<{
-    key: string;
-    data?: ForecastData;
-    error?: string;
-  } | null>(null);
-  // Keep showing the previous view while the next one loads, so the page
-  // doesn't jump when the cutoff or date changes.
-  const [shown, setShown] = useState<ForecastData | null>(null);
-  const key = `${date}/${cutoff}/${retry}`;
-
-  useEffect(() => {
-    const controller = new AbortController();
-    fetch(`/api/forecast?delivery_date=${date}&cutoff=${cutoff}`, {
-      signal: AbortSignal.any([controller.signal, AbortSignal.timeout(15_000)]),
-    })
-      .then(async (response) => {
-        if (!response.ok)
-          throw new Error("Forecasts could not be loaded. Try again.");
-        return response.json() as Promise<ForecastData>;
-      })
-      .then((data) => {
-        setResult({ key, data });
-        setShown(data);
-      })
-      .catch((error) => {
-        if (!controller.signal.aborted)
-          setResult({
-            key,
-            error:
-              error instanceof Error
-                ? error.message
-                : "Unable to connect to the API.",
-          });
-      });
-    return () => controller.abort();
-  }, [date, cutoff, key]);
-
-  const error = result?.key === key ? result.error : undefined;
-  const loading = result?.key !== key;
-  const data = shown;
+  const { data, loading, error, retry } = useApi<ForecastData>(
+    `/api/forecast?delivery_date=${date}&cutoff=${cutoff}`,
+    "Forecasts could not be loaded. Try again.",
+  );
 
   function update(changes: Partial<Settings>) {
     window.history.replaceState(
@@ -249,7 +208,7 @@ export default function ForecastPage() {
                 variant="outline"
                 size="sm"
                 className="mt-2"
-                onClick={() => setRetry((value) => value + 1)}
+                onClick={retry}
               >
                 Retry
               </Button>

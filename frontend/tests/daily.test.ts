@@ -3,13 +3,12 @@ import {
   dailyReleaseInfo,
   errorDirection,
   fromLocalDate,
-  intervalLabel,
   readSettings,
   settingsQuery,
   shiftDate,
-  signed,
   toLocalDate,
-} from "../app/forecast-data";
+} from "../lib/daily";
+import { intervalLabel, signed } from "../lib/format";
 
 describe("settings", () => {
   test("defaults to 16 January at 10:00 with actuals hidden", () => {

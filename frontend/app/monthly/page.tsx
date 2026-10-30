@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import MonthlyPage from "./monthly-page";
+import MonthlyPage from "@/components/monthly/monthly-page";
 
 export default function Page() {
   return (

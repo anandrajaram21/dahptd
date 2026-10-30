@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useSyncExternalStore } from "react";
+import { useState } from "react";
 import {
   Bar,
   BarChart,
@@ -13,43 +13,15 @@ import {
   YAxis,
 } from "recharts";
 import {
-  ChartContainer,
-  ChartTooltip,
-  type ChartConfig,
-} from "@/components/ui/chart";
-import { depth } from "./sheet";
-import {
-  errorDirection,
-  intervalLabel,
-  number,
-  signed,
-  timeLabel,
-  type Point,
-} from "./forecast-data";
-
-// Theme tokens from globals.css, so both light and dark sheets recolour.
-export const chartConfig = {
-  forecast: { label: "Forecast", color: "var(--forecast)" },
-  actual: { label: "Actual", color: "var(--actual)" },
-  over: { label: "Forecast too high", color: "var(--over)" },
-  under: { label: "Forecast too low", color: "var(--under)" },
-} satisfies ChartConfig;
-
-export const GRID_STROKE = "var(--grid)";
-export const AXIS_TICK = { fill: "var(--muted-foreground)", fontSize: 12 };
-
-/** Animate only when the visitor hasn't asked for reduced motion. */
-export function useMotion() {
-  return useSyncExternalStore(
-    (onChange) => {
-      const query = matchMedia("(prefers-reduced-motion: reduce)");
-      query.addEventListener("change", onChange);
-      return () => query.removeEventListener("change", onChange);
-    },
-    () => !matchMedia("(prefers-reduced-motion: reduce)").matches,
-    () => false,
-  );
-}
+  AXIS_TICK,
+  GRID_STROKE,
+  chartConfig,
+  depth,
+  useMotion,
+} from "@/components/chart-theme";
+import { ChartContainer, ChartTooltip } from "@/components/ui/chart";
+import { errorDirection, type Point } from "@/lib/daily";
+import { intervalLabel, number, signed, timeLabel } from "@/lib/format";
 
 const SYNC = "delivery-day";
 const Y_AXIS_WIDTH = 64;

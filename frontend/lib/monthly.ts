@@ -1,5 +1,5 @@
-import { cutoffs, DEFAULT_CUTOFF, type Metrics } from "../forecast-data";
-import { sameRun, type ReleaseInfo } from "../release-notice";
+import { cutoffs, DEFAULT_CUTOFF, sameRun, type ReleaseInfo } from "./cutoffs";
+import type { Metrics } from "./daily";
 
 export type Summary = Metrics & {
   mean_error: number | null;

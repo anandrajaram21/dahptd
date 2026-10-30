@@ -1,28 +1,21 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { TriangleAlertIcon } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { chartConfig } from "../forecast-chart";
-import { cutoffs, dayLabel, number, signed } from "../forecast-data";
-import { ReleaseNotice } from "../release-notice";
-import {
-  CutoffGrid,
-  DepthKey,
-  Figure,
-  LegendKey,
-  NoteRef,
-  NotesPanel,
-  PanelGroup,
-  Sheet,
-  StatStrip,
-  noteOpener,
-} from "../sheet";
-import { SiteHeader } from "../site-header";
-import { CutoffChart, DailyChart, TimeOfDayChart } from "./monthly-charts";
+import { chartConfig } from "@/components/chart-theme";
+import { CutoffGrid } from "@/components/cutoff-grid";
+import { DepthKey, LegendKey } from "@/components/legend";
+import { NoteRef, NotesPanel, noteOpener } from "@/components/notes";
+import { ReleaseNotice } from "@/components/release-notice";
+import { Figure, PanelGroup, Sheet, StatStrip } from "@/components/sheet";
+import { SiteHeader } from "@/components/site-header";
+import { useApi } from "@/hooks/use-api";
+import { cutoffs } from "@/lib/cutoffs";
+import { dayLabel, number, signed } from "@/lib/format";
 import {
   calendarWeeks,
   dailyHref,
@@ -34,7 +27,8 @@ import {
   type DaySummary,
   type MonthlyData,
   type Summary,
-} from "./monthly-data";
+} from "@/lib/monthly";
+import { CutoffChart, DailyChart, TimeOfDayChart } from "./monthly-charts";
 
 // Calendar shading: the miss-depth ramp, in fixed accuracy steps.
 const ACCURACY_STEPS = [
@@ -49,43 +43,10 @@ const accuracyStep = (accuracy: number) =>
 export default function MonthlyPage() {
   const cutoff = readCutoff(useSearchParams());
   const [notesOpen, setNotesOpen] = useState(false);
-  const [retry, setRetry] = useState(0);
-  const [result, setResult] = useState<{ key: string; error?: string } | null>(
-    null,
+  const { data, loading, error, retry } = useApi<MonthlyData>(
+    `/api/monthly?cutoff=${cutoff}`,
+    "The monthly overview could not be loaded.",
   );
-  // Keep the previous month visible while a new cutoff loads.
-  const [data, setData] = useState<MonthlyData | null>(null);
-  const key = `${cutoff}/${retry}`;
-
-  useEffect(() => {
-    const controller = new AbortController();
-    fetch(`/api/monthly?cutoff=${cutoff}`, {
-      signal: AbortSignal.any([controller.signal, AbortSignal.timeout(15_000)]),
-    })
-      .then(async (response) => {
-        if (!response.ok)
-          throw new Error("The monthly overview could not be loaded.");
-        return response.json() as Promise<MonthlyData>;
-      })
-      .then((month) => {
-        setResult({ key });
-        setData(month);
-      })
-      .catch((error) => {
-        if (!controller.signal.aborted)
-          setResult({
-            key,
-            error:
-              error instanceof Error
-                ? error.message
-                : "Unable to connect to the API.",
-          });
-      });
-    return () => controller.abort();
-  }, [cutoff, key]);
-
-  const error = result?.key === key ? result.error : undefined;
-  const loading = result?.key !== key;
 
   function selectCutoff(value: string) {
     window.history.replaceState(
@@ -169,7 +130,7 @@ export default function MonthlyPage() {
                 variant="outline"
                 size="sm"
                 className="mt-2"
-                onClick={() => setRetry((value) => value + 1)}
+                onClick={retry}
               >
                 Retry
               </Button>

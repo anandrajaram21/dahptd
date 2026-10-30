@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import ForecastPage from "./forecast-page";
+import DailyPage from "@/components/daily/daily-page";
 
 export default function Home() {
   return (
@@ -10,7 +10,7 @@ export default function Home() {
         </main>
       }
     >
-      <ForecastPage />
+      <DailyPage />
     </Suspense>
   );
 }
