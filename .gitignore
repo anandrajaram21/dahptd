@@ -10,3 +10,8 @@ __pycache__/
 .vercel/
 .DS_Store
 *.tsbuildinfo
+
+# Impeccable design tooling (local only)
+.impeccable/
+PRODUCT.md
+DESIGN.md
