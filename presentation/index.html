@@ -382,14 +382,14 @@
     </div>
     <div class="box" style="display:grid; gap:22px; align-content:start">
       <h3>Browser request flow</h3>
-      <p>URL date / cutoff → <code>useEffect</code> → <code>fetch</code> → JSON → React state.</p>
+      <p>URL date / cutoff → shared <code>useApi</code> hook → <code>fetch</code> → JSON → React state.</p>
       <p style="font-size:19px; overflow-wrap:anywhere"><code>/api/forecast?delivery_date=2026-01-16&amp;cutoff=10:00</code><br><code>/api/monthly?cutoff=10:00</code></p>
       <p>15-second timeout · abort superseded requests · retry on error.</p>
       <p>Previous result stays visible while the next loads.</p>
     </div>
   </div>
   <p class="rise d2" style="margin-top:32px; font-size:21px">Same-origin requests: Vercel routes to FastAPI in production; Next.js proxies locally.</p>
-  <aside class="notes">Yes, the layout and page wrappers are React Server Components, but they do not fetch forecast data. Interactive dashboards are Client Components. Suspense supports their useSearchParams hook; loading and errors for API calls use explicit state. Changing date or cutoff updates the URL and triggers browser fetch. Requests time out after 15 seconds and abort on cleanup; previous results stay visible. Retry makes a new request. No SWR, React Query, or Server Actions are used.</aside>
+  <aside class="notes">Yes, the layout and page wrappers are React Server Components, but they do not fetch forecast data. Interactive dashboards are Client Components. Suspense supports their useSearchParams hook; loading and errors for API calls use explicit state. Changing date or cutoff updates the URL and triggers a browser fetch through one shared useApi hook used by both pages. Requests time out after 15 seconds and abort on cleanup; previous results stay visible. Retry makes a new request. No SWR, React Query, or Server Actions are used.</aside>
 </section>
 
 <section class="slide sheet" data-part="Part 2 · Technical review">
@@ -440,23 +440,24 @@
       <div><b>backend/</b></div>
       <div>&nbsp; app/main.py <i>HTTP, input validation</i></div>
       <div>&nbsp; app/analysis.py <i>selection, alignment, metrics</i></div>
+      <div>&nbsp; app/snapshot.py <i>loads data + manifest</i></div>
       <div>&nbsp; scripts/download_data.py <i>snapshot refresh</i></div>
       <div>&nbsp; data/elexon/ <i>gz data + manifest</i></div>
       <div>&nbsp; tests/ <i>pytest</i></div>
     </div>
     <div class="tree">
-      <div><b>frontend/app/</b></div>
-      <div>&nbsp; forecast-page.tsx <i>daily view</i></div>
-      <div>&nbsp; forecast-chart.tsx <i>contour + error charts</i></div>
-      <div>&nbsp; forecast-data.ts <i>types, URL state, format</i></div>
-      <div>&nbsp; monthly/ <i>page, charts, data</i></div>
-      <div>&nbsp; sheet.tsx <i>shared shell, cutoff grid, keys</i></div>
-      <div>&nbsp; globals.css <i>light + dark theme tokens</i></div>
-      <div style="margin-top:14px"><b>frontend/tests/</b> <i>pure-logic tests</i></div>
+      <div><b>frontend/</b></div>
+      <div>&nbsp; app/ <i>routes, layout, light + dark tokens</i></div>
+      <div>&nbsp; components/daily/ <i>daily page, contour + error charts</i></div>
+      <div>&nbsp; components/monthly/ <i>monthly page + charts</i></div>
+      <div>&nbsp; components/ <i>shared shell, cutoff grid, keys, notes</i></div>
+      <div>&nbsp; hooks/use-api.ts <i>fetch, timeout, retry</i></div>
+      <div>&nbsp; lib/ <i>types, URL state, formatting</i></div>
+      <div>&nbsp; tests/ <i>pure-logic tests</i></div>
     </div>
   </div>
-  <p class="reveal" data-step="1" style="margin-top:36px"><b>Start here:</b> analysis.py → main.py → forecast-data.ts → forecast-page.tsx</p>
-  <aside class="notes">Start with analysis.py for forecast selection and scoring, then main.py for the API. The core rule is one release at or before cutoff, with missing hours left as gaps. Follow forecast-data.ts and forecast-page.tsx into the interface.</aside>
+  <p class="reveal" data-step="1" style="margin-top:36px"><b>Start here:</b> analysis.py → main.py → lib/daily.ts → components/daily/daily-page.tsx</p>
+  <aside class="notes">Start with analysis.py for forecast selection and scoring, then main.py for the API. The core rule is one release at or before cutoff, with missing hours left as gaps. Follow lib/daily.ts and components/daily/daily-page.tsx into the interface. The frontend keeps app/ for routes only, with components, one shared fetch hook, and plain-TypeScript logic in separate folders.</aside>
 </section>
 
 <section class="slide sheet" data-part="Part 2 · Technical review">
