@@ -1,42 +1,65 @@
 """Reproducible, publication-time-aware analysis of the bundled Elexon snapshot."""
 
-import gzip
-import json
 from bisect import bisect_right
 from collections import Counter, defaultdict
 from datetime import UTC, date, datetime, time, timedelta
 from functools import lru_cache
 from math import sqrt
-from pathlib import Path
 from zoneinfo import ZoneInfo
 
-DATA_DIR = Path(__file__).resolve().parents[1] / "data" / "elexon"
+from app.snapshot import load_data, snapshot_metadata, timestamp
+
 LONDON = ZoneInfo("Europe/London")
 FIRST_DELIVERY = date(2026, 1, 1)
 LAST_DELIVERY = date(2026, 2, 1)
+MONTH_START = date(2026, 1, 1)
+MONTH_END = date(2026, 1, 31)
 HALF_HOUR = timedelta(minutes=30)
 
 
-def timestamp(value: str) -> datetime:
-    return datetime.fromisoformat(value.replace("Z", "+00:00"))
+# Responses, cached per input.
+
+
+@lru_cache(maxsize=64)
+def forecast_view(delivery_date: date, cutoff: time):
+    publications, actuals = load_data()
+    return {
+        **build_view(delivery_date, cutoff, publications, actuals),
+        **release_schedule(delivery_date, publications),
+        "snapshot": snapshot_metadata(),
+        "unit": "MW",
+        "timezone": "Europe/London",
+    }
+
+
+@lru_cache(maxsize=32)
+def month_view(cutoff: time):
+    return {
+        **build_month(cutoff, *load_data()),
+        "cutoffs": cutoff_comparison(),
+        "snapshot": snapshot_metadata(),
+        "unit": "MW",
+        "timezone": "Europe/London",
+    }
 
 
 @lru_cache(maxsize=1)
-def load_data():
-    """Return forecasts grouped by publication, and half-hourly actuals."""
-    publications = defaultdict(dict)
-    with gzip.open(DATA_DIR / "forecasts.json.gz", "rt") as file:
-        for row in json.load(file):
-            publications[timestamp(row["publishTime"])][timestamp(row["startTime"])] = (
-                row["generation"]
-            )
-    with gzip.open(DATA_DIR / "actuals.json.gz", "rt") as file:
-        actuals = {
-            timestamp(row["startTime"]): row["generation"]
-            for row in json.load(file)
-            if row["fuelType"] == "WIND"
+def cutoff_comparison():
+    """Month-level metrics for every whole-hour cutoff, for comparison."""
+    publications, actuals = load_data()
+    return [
+        {
+            "cutoff": month["cutoff"],
+            "publications": month["publications"],
+            **month["summary"],
         }
-    return dict(publications), actuals
+        for month in (
+            build_month(time(hour), publications, actuals) for hour in range(24)
+        )
+    ]
+
+
+# One delivery day.
 
 
 def latest_publication(publications, decision_at: datetime):
@@ -44,25 +67,6 @@ def latest_publication(publications, decision_at: datetime):
     times = sorted(publications)
     index = bisect_right(times, decision_at)
     return times[index - 1] if index else None
-
-
-def metrics(points):
-    pairs = [p for p in points if p["error"] is not None]
-    errors = [p["error"] for p in pairs]
-    count = len(errors)
-    total_actual = sum(p["actual"] for p in pairs)
-    absolute = sum(abs(e) for e in errors)
-    return {
-        "mae": absolute / count if count else None,
-        "rmse": sqrt(sum(e * e for e in errors) / count) if count else None,
-        # 100% - WAPE: total absolute error relative to total actual output.
-        "accuracy": 100 * (1 - absolute / total_actual) if total_actual else None,
-        "matched_intervals": count,
-        "expected_intervals": len(points),
-        "overestimated_intervals": sum(e > 0 for e in errors),
-        "underestimated_intervals": sum(e < 0 for e in errors),
-        "equal_intervals": sum(e == 0 for e in errors),
-    }
 
 
 def build_view(delivery_date: date, cutoff: time, publications, actuals):
@@ -106,8 +110,30 @@ def publication_points(delivery_date, forecast, actuals):
     return points
 
 
-MONTH_START = date(2026, 1, 1)
-MONTH_END = date(2026, 1, 31)
+def release_schedule(delivery_date: date, publications):
+    """Which publication each whole-hour cutoff would use for this delivery day,
+    and the clock times of every release on the decision date."""
+    decision_date = delivery_date - timedelta(days=1)
+    releases = []
+    for hour in range(24):
+        published = latest_publication(
+            publications, datetime.combine(decision_date, time(hour), LONDON)
+        )
+        releases.append(
+            {
+                "cutoff": f"{hour:02d}:00",
+                "publish_time": published.isoformat() if published else None,
+            }
+        )
+    schedule = sorted(
+        time_label(p.isoformat())
+        for p in publications
+        if p.astimezone(LONDON).date() == decision_date
+    )
+    return {"cutoff_releases": releases, "schedule": schedule}
+
+
+# The whole month.
 
 
 def month_days():
@@ -115,18 +141,6 @@ def month_days():
     while day <= MONTH_END:
         yield day
         day += timedelta(days=1)
-
-
-def summary(points):
-    """Metrics plus signed and level averages over matched half-hours."""
-    pairs = [p for p in points if p["error"] is not None]
-    count = len(pairs)
-    return {
-        **metrics(points),
-        "mean_error": sum(p["error"] for p in pairs) / count if count else None,
-        "mean_forecast": sum(p["forecast"] for p in pairs) / count if count else None,
-        "mean_actual": sum(p["actual"] for p in pairs) / count if count else None,
-    }
 
 
 def build_month(cutoff: time, publications, actuals):
@@ -161,80 +175,39 @@ def build_month(cutoff: time, publications, actuals):
     }
 
 
+# Accuracy metrics.
+
+
+def metrics(points):
+    pairs = [p for p in points if p["error"] is not None]
+    errors = [p["error"] for p in pairs]
+    count = len(errors)
+    total_actual = sum(p["actual"] for p in pairs)
+    absolute = sum(abs(e) for e in errors)
+    return {
+        "mae": absolute / count if count else None,
+        "rmse": sqrt(sum(e * e for e in errors) / count) if count else None,
+        # 100% - WAPE: total absolute error relative to total actual output.
+        "accuracy": 100 * (1 - absolute / total_actual) if total_actual else None,
+        "matched_intervals": count,
+        "expected_intervals": len(points),
+        "overestimated_intervals": sum(e > 0 for e in errors),
+        "underestimated_intervals": sum(e < 0 for e in errors),
+        "equal_intervals": sum(e == 0 for e in errors),
+    }
+
+
+def summary(points):
+    """Metrics plus signed and level averages over matched half-hours."""
+    pairs = [p for p in points if p["error"] is not None]
+    count = len(pairs)
+    return {
+        **metrics(points),
+        "mean_error": sum(p["error"] for p in pairs) / count if count else None,
+        "mean_forecast": sum(p["forecast"] for p in pairs) / count if count else None,
+        "mean_actual": sum(p["actual"] for p in pairs) / count if count else None,
+    }
+
+
 def time_label(value: str) -> str:
     return timestamp(value).astimezone(LONDON).strftime("%H:%M")
-
-
-@lru_cache(maxsize=1)
-def cutoff_comparison():
-    """Month-level metrics for every whole-hour cutoff, for comparison."""
-    publications, actuals = load_data()
-    return [
-        {
-            "cutoff": month["cutoff"],
-            "publications": month["publications"],
-            **month["summary"],
-        }
-        for month in (
-            build_month(time(hour), publications, actuals) for hour in range(24)
-        )
-    ]
-
-
-@lru_cache(maxsize=32)
-def month_view(cutoff: time):
-    return {
-        **build_month(cutoff, *load_data()),
-        "cutoffs": cutoff_comparison(),
-        "snapshot": snapshot_metadata(),
-        "unit": "MW",
-        "timezone": "Europe/London",
-    }
-
-
-@lru_cache(maxsize=1)
-def snapshot_metadata():
-    with (DATA_DIR / "manifest.json").open() as file:
-        manifest = json.load(file)
-    return {
-        "retrieved_at": manifest["retrieved_at"],
-        "files": {
-            name: {key: details[key] for key in ("dataset", "sha256")}
-            for name, details in manifest["files"].items()
-        },
-    }
-
-
-def release_schedule(delivery_date: date, publications):
-    """Which publication each whole-hour cutoff would use for this delivery day,
-    and the clock times of every release on the decision date."""
-    decision_date = delivery_date - timedelta(days=1)
-    releases = []
-    for hour in range(24):
-        published = latest_publication(
-            publications, datetime.combine(decision_date, time(hour), LONDON)
-        )
-        releases.append(
-            {
-                "cutoff": f"{hour:02d}:00",
-                "publish_time": published.isoformat() if published else None,
-            }
-        )
-    schedule = sorted(
-        time_label(p.isoformat())
-        for p in publications
-        if p.astimezone(LONDON).date() == decision_date
-    )
-    return {"cutoff_releases": releases, "schedule": schedule}
-
-
-@lru_cache(maxsize=64)
-def forecast_view(delivery_date: date, cutoff: time):
-    publications, actuals = load_data()
-    return {
-        **build_view(delivery_date, cutoff, publications, actuals),
-        **release_schedule(delivery_date, publications),
-        "snapshot": snapshot_metadata(),
-        "unit": "MW",
-        "timezone": "Europe/London",
-    }

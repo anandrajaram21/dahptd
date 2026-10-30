@@ -8,9 +8,9 @@ from app.analysis import (
     forecast_view,
     metrics,
     month_view,
-    timestamp,
 )
 from app.main import app
+from app.snapshot import timestamp
 
 
 def test_uses_single_latest_publication_at_or_before_cutoff():

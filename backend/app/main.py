@@ -6,6 +6,9 @@ from pydantic import BaseModel
 
 from app.analysis import FIRST_DELIVERY, LAST_DELIVERY, forecast_view, month_view
 
+# A clock time on the day before delivery, e.g. "10:00".
+Cutoff = Annotated[str, Query(pattern=r"^([01]\d|2[0-3]):[0-5]\d$")]
+
 app = FastAPI(
     title="API",
     version="0.1.0",
@@ -28,7 +31,7 @@ async def health(response: Response) -> HealthResponse:
 @app.get("/api/forecast")
 def get_forecast(
     delivery_date: date = date(2026, 1, 16),
-    cutoff: Annotated[str, Query(pattern=r"^([01]\d|2[0-3]):[0-5]\d$")] = "10:00",
+    cutoff: Cutoff = "10:00",
 ):
     if not FIRST_DELIVERY <= delivery_date <= LAST_DELIVERY:
         raise HTTPException(
@@ -39,6 +42,6 @@ def get_forecast(
 
 @app.get("/api/monthly")
 def get_monthly(
-    cutoff: Annotated[str, Query(pattern=r"^([01]\d|2[0-3]):[0-5]\d$")] = "10:00",
+    cutoff: Cutoff = "10:00",
 ):
     return month_view(time.fromisoformat(cutoff))
